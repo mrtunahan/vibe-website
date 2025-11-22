@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Quiz Sistemi</title>
+    <title>Online Sınav Sistemi</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +13,12 @@
         <p>Lütfen sınava başlamak için bilgilerinizi giriniz.</p>
         
         <input type="text" id="studentName" placeholder="Adınız Soyadınız">
-        <input type="number" id="studentId" placeholder="Öğrenci Numaranız">
+        <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
+               oninput="if(this.value.length > 9) this.value = this.value.slice(0, 9);">
+        
+        <div class="warning-box">
+            ⚠️ <strong>DİKKAT:</strong> Sınav süresi 30 dakikadır. Başka bir sekmeye geçerseniz veya ekranı değiştirirseniz sınavınız <strong>OTOMATİK OLARAK İPTAL EDİLİR (0 Puan).</strong>
+        </div>
         
         <button onclick="startQuiz()">Sınavı Başlat</button>
     </div>
@@ -21,13 +26,27 @@
     <div class="container hidden" id="quizScreen">
         <div class="header-info">
             <span id="displayName">Öğrenci: ...</span>
-            <span id="timer">Süre: --</span>
+            <span id="timer">Kalan Süre: 30:00</span>
         </div>
         
-        <div id="questionContainer">
-            </div>
+        <div id="questionCard" class="question-card">
+            <h3 id="qTitle">Soru 1</h3>
+            <p id="qText" class="q-text">Soru metni yükleniyor...</p>
+            <div id="qOptions" class="options-grid">
+                </div>
+        </div>
 
-        <button onclick="finishQuiz()">Sınavı Bitir</button>
+        <div id="agentBox" class="agent-box hidden">
+            <div class="agent-avatar">🕵️</div>
+            <div class="agent-message">
+                <strong>İpucu Ajanı:</strong>
+                <span id="agentText">...</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="nextBtn" onclick="nextQuestion()">Sonraki Soru ➡️</button>
+        </div>
     </div>
 
     <div class="container hidden" id="resultScreen">
@@ -39,7 +58,7 @@
             <h3>Puanınız: <span id="score">0</span> / 100</h3>
             <p id="feedbackMessage"></p>
         </div>
-        <button onclick="location.reload()">Çıkış Yap</button>
+        <button disabled style="background-color: #ccc; cursor: not-allowed;">Sınav Bitti</button>
     </div>
 
     <script src="script.js"></script>
