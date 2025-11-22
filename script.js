@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
 // ⚠️ 1. ADIMDA ALDIĞIN GOOGLE SCRIPT LİNKİNİ AŞAĞIYA YAPIŞTIR
 // ------------------------------------------------------------------
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDwsS_yFDQRF_nhmWUxlJTyw-FRNVlorftltBxpgXmsEeYGfmU_VkeDXfJSXnhnAha/exec'; 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDwsS_yFDQRF_nhmWUxlJTyw-FRNVlorftltBxpgXmsEeYGfmU_VkeDXfJSXnhnAha/exechttps://script.google.com/macros/s/AKfycbzqFaS4aaxpXTo6oSAUX_TLnGxThmjKEuO1c3LcYVy-EMSCQ9VXU0bZgQRXyXIO6esD/exec'; 
 
 // --- SORU HAVUZU ---
 // Hocam answer kısmı 0,1,2,3 şeklindedir (0=A, 1=B...)
