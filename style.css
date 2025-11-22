@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
     --primary: #4F46E5;
@@ -12,19 +12,23 @@
     --warning: #f59e0b;
 }
 
+/* Anti-Cheat: Seçimi Engelle */
 body {
     margin: 0; font-family: 'Inter', sans-serif;
     background: var(--bg-gradient); min-height: 100vh;
     display: flex; justify-content: center; align-items: center;
     color: var(--text);
+    user-select: none; /* Metin seçimini engeller */
+    -webkit-user-select: none;
 }
 
 /* Ana Kutu */
 .container {
-    background: var(--surface); width: 90%; max-width: 600px;
+    background: var(--surface); width: 90%; max-width: 650px;
     padding: 40px; border-radius: 24px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     text-align: center; position: relative; overflow: hidden; margin: 20px;
+    transition: all 0.3s ease;
 }
 
 .hidden { display: none !important; }
@@ -35,12 +39,13 @@ h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 10px 0; color: #111827; }
 p { color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
 
 /* Inputlar */
-input {
+input, textarea {
     width: 100%; padding: 15px; margin-bottom: 15px;
     border: 2px solid #e5e7eb; border-radius: 12px;
     font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s;
+    font-family: 'Inter', sans-serif;
 }
-input:focus { border-color: var(--primary); background: #f9fafb; }
+input:focus, textarea:focus { border-color: var(--primary); background: #f9fafb; }
 
 /* Butonlar */
 button {
@@ -49,37 +54,59 @@ button {
 }
 #startBtn, #nextBtn { background: var(--primary); color: white; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); }
 #startBtn:hover, #nextBtn:hover { background: var(--primary-hover); transform: translateY(-2px); }
-button:disabled { background: #d1d5db; cursor: not-allowed; transform: none; }
+button:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
 
-/* Sınav Alanı */
+/* Sınav Alanı & Animasyonlar */
 .progress-container { width: 100%; height: 8px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin-bottom: 25px; }
 .progress-bar { height: 100%; background: var(--success); width: 0%; transition: width 0.5s ease; }
 
-.header-info { display: flex; justify-content: space-between; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; background: #f3f4f6; padding: 10px 20px; border-radius: 50px; }
-.q-image { width: 100%; max-height: 250px; object-fit: contain; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e5e7eb; }
-.question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.q-badge { background: #eef2ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
-.objection-btn { width: auto; padding: 5px 12px; font-size: 0.8rem; background: transparent; color: #d97706; border: 1px solid #d97706; margin: 0; }
+.header-info { display: flex; justify-content: space-between; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; background: #f3f4f6; padding: 10px 20px; border-radius: 50px; align-items: center; }
+
+/* Timer Acil Durum Animasyonu */
+.timer-urgent { color: var(--danger); animation: pulse 1s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+/* Soru Kartı Geçiş Efekti */
+.question-card-container { overflow: hidden; }
+.question-card { transition: transform 0.3s ease, opacity 0.3s ease; }
+.slide-out { transform: translateX(-50px); opacity: 0; }
+.slide-in { animation: slideIn 0.4s forwards; }
+@keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+.q-image { width: 100%; max-height: 250px; object-fit: contain; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e5e7eb; background: #f9fafb; }
+.question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.q-badge { background: #eef2ff; color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+.objection-btn { width: auto; padding: 6px 14px; font-size: 0.85rem; background: transparent; color: #d97706; border: 1px solid #d97706; margin: 0; }
 .objection-btn:hover { background: #fffbeb; }
-.q-text { font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 25px; text-align: left; }
+.q-text { font-size: 1.35rem; font-weight: 600; color: #111827; margin-bottom: 25px; text-align: left; line-height: 1.4; }
 
+/* Seçenekler Grid */
 .options-grid { display: grid; gap: 12px; }
-.options-grid label { display: flex; align-items: center; padding: 15px; border: 2px solid #f3f4f6; border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left; font-weight: 500; }
-.options-grid label:hover { border-color: var(--primary); background: #eef2ff; }
-.options-grid input { width: 20px; height: 20px; margin: 0 15px 0 0; }
+/* Radyo ve Checkbox Etiketleri */
+.options-grid label { display: flex; align-items: center; padding: 16px; border: 2px solid #f3f4f6; border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left; font-weight: 500; color: var(--text); }
+.options-grid label:hover { border-color: var(--primary); background: #f8fafc; }
+/* Seçili durum */
+.options-grid label.selected { border-color: var(--primary); background: #eef2ff; color: var(--primary-hover); font-weight: 600; }
+.options-grid input[type="radio"], .options-grid input[type="checkbox"] { width: 20px; height: 20px; margin: 0 15px 0 0; accent-color: var(--primary); }
+/* Metin Giriş Tipi Soru */
+.text-answer-input { font-family: 'Inter', sans-serif; font-size: 1.1rem; border: 2px solid #d1d5db; }
+.text-answer-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
 
-.agent-box { background: #ecfdf5; color: #065f46; padding: 15px; border-radius: 12px; margin-top: 20px; display: flex; gap: 10px; text-align: left; }
+
+.agent-box { background: #ecfdf5; color: #065f46; padding: 15px; border-radius: 12px; margin-top: 25px; display: flex; gap: 15px; text-align: left; align-items: center; border-left: 4px solid var(--success); }
 .score-card h1 { font-size: 2rem; }
-#score { font-size: 3.5rem; font-weight: 800; color: var(--primary); display: block; margin: 10px 0; }
-.certificate-box { background: linear-gradient(to bottom right, #fff, #fff8dc); border: 4px double #d4af37; padding: 20px; border-radius: 12px; margin-top: 20px; }
+#score { font-size: 4rem; font-weight: 800; color: var(--primary); display: block; margin: 10px 0; line-height: 1; }
+.certificate-box { background: linear-gradient(to bottom right, #fff, #fff8dc); border: 4px double #d4af37; padding: 25px; border-radius: 12px; margin-top: 25px; position: relative; overflow: hidden; }
+.certificate-box::before { content: '🏆'; position: absolute; top: -20px; right: -20px; font-size: 8rem; opacity: 0.05; transform: rotate(30deg); }
 .admin-card { border: 3px solid var(--danger); }
-.warning-box { background: #fffbeb; border-left: 5px solid var(--warning); color: #92400e; padding: 15px; border-radius: 8px; text-align: left; font-size: 0.9rem; margin: 20px 0; }
+.warning-box { background: #fffbeb; border-left: 5px solid var(--warning); color: #92400e; padding: 15px; border-radius: 8px; text-align: left; font-size: 0.95rem; margin: 20px 0; line-height: 1.5; }
 
 /* İnceleme Alanı */
-.review-item { border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+.review-item { border: 1px solid #e5e7eb; padding: 15px; border-radius: 12px; margin-bottom: 15px; background: #f9fafb; }
 .review-item.correct { border-left: 5px solid var(--success); }
 .review-item.wrong { border-left: 5px solid var(--danger); }
-.opt-correct { background: #d1fae5; color: #065f46; font-weight: bold; }
-.opt-wrong { background: #fee2e2; color: #991b1b; text-decoration: line-through; }
+.opt-correct { background: #d1fae5; color: #065f46; font-weight: bold; border: 1px solid #a7f3d0; }
+.opt-wrong { background: #fee2e2; color: #991b1b; text-decoration: line-through; opacity: 0.8; }
+.review-opt { padding: 8px 12px; margin: 4px 0; border-radius: 8px; font-size: 0.95rem; display: block;}
 
-footer { position: fixed; bottom: 10px; color: rgba(255,255,255,0.7); font-size: 0.8rem; cursor: pointer; }
+footer { position: fixed; bottom: 10px; color: rgba(255,255,255,0.8); font-size: 0.85rem; cursor: pointer; z-index: 10; padding: 5px 10px; background: rgba(0,0,0,0.2); border-radius: 20px; }

@@ -2,29 +2,33 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akademik Sınav Sistemi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Güvenli Akademik Sınav Sistemi</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
 
     <div class="container" id="loginScreen">
         <img src="https://cdn-icons-png.flaticon.com/512/2997/2997336.png" alt="Uni Logo" class="uni-logo">
         <h1>Final Sınavı Giriş</h1>
         <p>Lütfen kimlik bilgilerinizi doğrulayınız.</p>
         
-        <input type="text" id="studentName" placeholder="Ad Soyad Giriniz">
+        <input type="text" id="studentName" placeholder="Ad Soyad Giriniz" autocomplete="off">
         <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
-               oninput="if(this.value.length > 9) this.value = this.value.slice(0, 9);">
+               oninput="if(this.value.length > 9) this.value = this.value.slice(0, 9);" autocomplete="off">
         
         <div class="warning-box">
             <strong>⚠️ SINAV KURALLARI:</strong><br>
             • Süre 30 dakikadır.<br>
-            • Sekme değiştirirseniz sınav <strong>İPTAL</strong> olur.<br>
-            • Tarayıcı tam ekran moduna geçer.
+            • Tam ekran zorunludur. Çıkarsanız sınav <strong>İPTAL</strong> olur.<br>
+            • Sekme değiştirmek yasaktır.<br>
+            • Formüller otomatik yüklenecektir.
         </div>
         
-        <button id="startBtn" onclick="startQuiz()" disabled>Sistem Yükleniyor... ⏳</button>
+        <button id="startBtn" onclick="startQuizAttempt()" disabled>Sistem Yükleniyor... ⏳</button>
     </div>
 
     <div class="container hidden" id="quizScreen">
@@ -34,32 +38,37 @@
 
         <div class="header-info">
             <span id="displayName">Öğrenci</span>
-            <span>⏱️ <span id="timer">30:00</span></span>
+            <span id="timerContainer">⏱️ <span id="timer">30:00</span></span>
         </div>
         
-        <div class="question-card">
-            <img id="qImage" class="q-image hidden" src="" alt="Soru">
-            
-            <div class="question-header">
-                <span class="q-badge" id="qIndex">SORU 1</span>
-                <button onclick="reportObjection()" class="objection-btn">⚠️ İtiraz Et</button>
-            </div>
+        <div class="question-card-container">
+            <div class="question-card" id="currentQuestionCard">
+                <img id="qImage" class="q-image hidden" src="" alt="Soru Görseli">
+                
+                <div class="question-header">
+                    <span class="q-badge" id="qIndex">SORU 1</span>
+                    <button onclick="reportObjection()" class="objection-btn">⚠️ Soruda Hata Var</button>
+                </div>
 
-            <p id="qText" class="q-text">Soru yükleniyor...</p>
-            
-            <div id="qOptions" class="options-grid"></div>
+                <p id="qText" class="q-text">Soru yükleniyor...</p>
+                
+                <div id="qOptions" class="options-grid">
+                    </div>
+            </div>
         </div>
 
         <div id="agentBox" class="agent-box hidden">
-            <span style="font-size: 1.5rem;">🕵️</span>
+            <span style="font-size: 1.5rem;">💡</span>
             <div><strong>İpucu:</strong> <span id="agentText">...</span></div>
         </div>
 
-        <button id="nextBtn" onclick="nextQuestion()">Sonraki Soru ➡️</button>
+        <div class="nav-buttons">
+            <button id="nextBtn" onclick="nextQuestion()">Sonraki Soru ➡️</button>
+        </div>
     </div>
 
     <div class="container hidden" id="resultScreen">
-        <h1>🏁 Sınav Bitti</h1>
+        <h1>🏁 Sınav Tamamlandı</h1>
         <div class="score-card">
             <h2 id="resultName">...</h2>
             <p>No: <span id="resultId">...</span></p>
@@ -70,38 +79,39 @@
             <p id="feedbackMessage" style="font-weight: bold; font-size: 1.1rem;"></p>
 
             <div id="analysisBox" class="warning-box hidden" style="background:#eff6ff; border-color:#3b82f6; color:#1e40af;">
-                <strong>📊 Analiz Raporu:</strong> <span id="analysisText">...</span>
+                <strong>📊 Performans Analizi:</strong> <span id="analysisText">...</span>
             </div>
 
             <div id="certificateArea" class="certificate-box hidden">
                 <div style="font-size:3rem; margin-bottom:10px;">🏆</div>
                 <h3 style="color:#d97706; letter-spacing:2px; margin:0;">BAŞARI BELGESİ</h3>
                 <p>Sayın <strong id="certName">...</strong>,</p>
-                <p>Bu dersi başarıyla geçtiniz.</p>
+                <p>Bu dersin final sınavını başarıyla tamamladınız.</p>
                 <div style="margin-top:15px; border-top:1px solid #d4af37; padding-top:5px; font-size:0.8rem; color:#888;">
-                    Tarih: <span id="certDate"></span> | Onay: Sistem ✅
+                    Tarih: <span id="certDate"></span> | Doğrulama Kodu: <span id="authCode"></span>
                 </div>
             </div>
         </div>
 
-        <button onclick="toggleReview()" style="background:#fff; color:#333; border:2px solid #ddd; margin-top:20px;">🔍 Cevapları İncele</button>
-        <div id="reviewArea" class="hidden" style="margin-top: 20px; text-align: left;"></div>
-        <button disabled style="background:#e5e7eb; color:#9ca3af; cursor:not-allowed;">Oturum Kapandı</button>
+        <button onclick="toggleReview()" style="background:#fff; color:#333; border:2px solid #ddd; margin-top:20px;">🔍 Cevap Anahtarını Görüntüle</button>
+        <div id="reviewArea" class="hidden" style="margin-top: 20px; text-align: left; max-height: 400px; overflow-y: auto;"></div>
+        <button disabled style="background:#e5e7eb; color:#9ca3af; cursor:not-allowed; margin-top: 10px;">Oturum Kapatıldı</button>
     </div>
 
     <div id="adminPanel" class="container admin-card hidden">
-        <h2 style="color:#ef4444;">🛠️ Hoca Paneli</h2>
+        <h2 style="color:#ef4444;">🛠️ Hoca Paneli (Güvenli)</h2>
         <div id="adminLogin">
             <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
-            <button onclick="adminLogin()" style="background:#374151;">Giriş</button>
+            <button onclick="adminLoginAttempt()" style="background:#374151;">Giriş Yap</button>
         </div>
         <div id="adminControls" class="hidden">
-            <button onclick="deleteQuestions()" style="background:#ef4444;">🗑️ Tümünü Sil</button>
-            <textarea id="jsonInput" placeholder="JSON Kodunu Yapıştır..." style="width:100%; height:100px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px;"></textarea>
-            <button onclick="uploadQuestions()" style="background:#10b981;">📥 Yükle</button>
+            <p style="color:green">Giriş Başarılı. Hoş geldiniz.</p>
+            <button onclick="deleteQuestions()" style="background:#ef4444;">🗑️ Veritabanını Temizle</button>
+            <textarea id="jsonInput" placeholder='JSON Formatında Soru Yapıştır... Örn: [{"question":"Soru?", "options":["A","B"], "answer":"A", "type":"radio"}]' style="width:100%; height:150px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px; font-family: monospace;"></textarea>
+            <button onclick="uploadQuestions()" style="background:#10b981;">📥 Soruları Yükle</button>
             <p id="adminStatus" style="font-size:0.8rem; color:#666;"></p>
         </div>
-        <button onclick="closeAdmin()" style="background:transparent; color:#666; border:1px solid #ccc;">Kapat</button>
+        <button onclick="closeAdmin()" style="background:transparent; color:#666; border:1px solid #ccc; margin-top:20px;">Kapat</button>
     </div>
 
     <footer><span onclick="toggleAdmin()">🔒 Yönetici Girişi</span></footer>
