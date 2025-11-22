@@ -3,101 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akademik Sınav Sistemi</title>
+    <title>Akademik Sınav Portalı</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="container" id="loginScreen">
-        <img src="https://cdn-icons-png.flaticon.com/512/2997/2997336.png" alt="Uni Logo" class="uni-logo">
-        <h1>🎓 Final Sınavı Giriş</h1>
-        <input type="text" id="studentName" placeholder="Ad Soyad Giriniz">
-        <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
-               oninput="if(this.value.length > 9) this.value = this.value.slice(0, 9);">
-        <div class="warning-box">
-            ⚠️ <strong>KURALLAR:</strong><br>
-            1. Tarayıcı <strong>Tam Ekran</strong> olur.<br>
-            2. Sekme değiştirmek <strong>KOPYA</strong> sayılır.<br>
-            3. Hatalı soru görürseniz "İtiraz Et" butonunu kullanabilirsiniz.
-        </div>
-        <button id="startBtn" onclick="startQuiz()" disabled>Sistem Yükleniyor... ⏳</button>
-    </div>
+    <div class="bg-shape"></div>
 
-    <div class="container hidden" id="quizScreen">
-        <div class="progress-container">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-
-        <div class="header-info">
-            <span id="displayName">...</span>
-            <span id="timer">30:00</span>
+    <div class="card glass-effect" id="loginScreen">
+        <div class="logo-container">
+            <img src="https://cdn-icons-png.flaticon.com/512/2997/2997336.png" alt="Uni Logo" class="uni-logo">
         </div>
         
-        <div id="questionCard" class="question-card">
-            <img id="qImage" class="q-image hidden" src="" alt="Soru Görseli">
-            
-            <h3 id="qTitle">Soru Yükleniyor...</h3>
-            <p id="qText" class="q-text">...</p>
-            <div id="qOptions" class="options-grid"></div>
-            
-            <div style="text-align: right; margin-top: 10px;">
-                <button onclick="reportObjection()" class="objection-btn">⚠️ Soruyu İtiraz Et</button>
+        <h1>Final Sınavı Giriş</h1>
+        <p class="subtitle">Lütfen kimlik bilgilerinizi doğrulayınız.</p>
+        
+        <div class="input-group">
+            <label>Ad Soyad</label>
+            <input type="text" id="studentName" placeholder="Örn: Ahmet Yılmaz">
+        </div>
+        
+        <div class="input-group">
+            <label>Öğrenci Numarası</label>
+            <input type="number" id="studentId" placeholder="9 Haneli Numara" 
+                   oninput="if(this.value.length > 9) this.value = this.value.slice(0, 9);">
+        </div>
+        
+        <div class="alert-box warning">
+            <h4>⚠️ Sınav Kuralları</h4>
+            <ul>
+                <li>Süre <strong>30 dakikadır</strong>.</li>
+                <li>Tarayıcı <strong>Tam Ekran</strong> moduna geçer.</li>
+                <li>Sekme değiştirmek <strong>KOPYA</strong> sayılır ve sınav iptal edilir.</li>
+                <li>Hatalı soru için "İtiraz Et" butonu mevcuttur.</li>
+            </ul>
+        </div>
+        
+        <button id="startBtn" onclick="startQuiz()" class="primary-btn" disabled>Sistem Yükleniyor... ⏳</button>
+    </div>
+
+    <div class="exam-wrapper hidden" id="quizScreen">
+        <div class="top-bar">
+            <div class="student-info">
+                <span class="avatar">👤</span>
+                <span id="displayName">Öğrenci</span>
+            </div>
+            <div class="timer-badge" id="timerBox">
+                🕒 <span id="timer">30:00</span>
             </div>
         </div>
 
-        <div id="agentBox" class="agent-box hidden">
-            <div class="agent-avatar">🕵️</div>
-            <div class="agent-message"><strong>İpucu:</strong> <span id="agentText">...</span></div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressBar"></div>
         </div>
 
-        <div class="controls">
-            <button id="nextBtn" onclick="nextQuestion()">Sonraki Soru ➡️</button>
+        <div class="card question-card">
+            <div class="card-header">
+                <span class="badge" id="qIndex">Soru 1</span>
+                <button onclick="reportObjection()" class="text-btn danger">⚠️ İtiraz Et</button>
+            </div>
+
+            <div class="img-container hidden" id="imgContainer">
+                <img id="qImage" src="" alt="Soru Görseli">
+            </div>
+
+            <h2 id="qText">Soru yükleniyor...</h2>
+            
+            <div class="options-grid" id="qOptions">
+                </div>
+
+            <div id="agentBox" class="agent-box hidden">
+                <div class="agent-icon">🕵️</div>
+                <div class="agent-content">
+                    <strong>İpucu Ajanı:</strong>
+                    <span id="agentText">...</span>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <button id="nextBtn" onclick="nextQuestion()" class="primary-btn">Sonraki Soru ➡️</button>
+            </div>
         </div>
     </div>
 
-    <div class="container hidden" id="resultScreen" style="max-width: 800px;">
-        <h1>🏁 Sınav Sonlandı</h1>
-        <div class="score-card">
-            <h2 id="resultName"></h2>
-            <p>No: <span id="resultId"></span></p>
-            <hr>
-            <h3>Puan: <span id="score">0</span> / 100</h3>
-            <p id="feedbackMessage" style="font-weight: bold;"></p>
+    <div class="card glass-effect hidden" id="resultScreen">
+        <div class="result-header">
+            <div class="result-icon">🏁</div>
+            <h1>Sınav Tamamlandı</h1>
+        </div>
+        
+        <div class="result-details">
+            <h2 id="resultName">Ad Soyad</h2>
+            <p class="meta">No: <span id="resultId">...</span></p>
             
-            <div id="analysisBox" class="analysis-box hidden">
-                <h3>🤖 Analiz Raporu</h3>
+            <div class="score-circle">
+                <span id="score">0</span>
+                <small>Puan</small>
+            </div>
+            
+            <p id="feedbackMessage" class="feedback">...</p>
+
+            <div id="analysisBox" class="info-box hidden">
+                <h4>📊 Yapay Zeka Analizi</h4>
                 <div id="analysisText">...</div>
             </div>
 
-            <div id="certificateArea" class="hidden certificate-box">
-                <div class="cert-icon">🏆</div>
-                <h3>BAŞARI BELGESİ</h3>
-                <p>Sayın <strong id="certName"></strong>,</p>
-                <p>Bu dersi başarıyla geçtiniz.</p>
-                <div class="cert-footer"><small id="certDate"></small><small>Onay: Sistem ✅</small></div>
+            <div id="certificateArea" class="certificate hidden">
+                <div class="cert-border">
+                    <h3>🏆 BAŞARI BELGESİ</h3>
+                    <p>Sayın <strong id="certName">...</strong>,</p>
+                    <p>Bu dersi üstün başarıyla tamamladınız.</p>
+                    <div class="cert-sign">
+                        <span>Tarih: <b id="certDate"></b></span>
+                        <span>Onay: <b>Sistem ✅</b></span>
+                    </div>
+                </div>
             </div>
         </div>
-        <button onclick="toggleReview()" style="background-color: #6c5ce7; margin-top: 15px;">🔍 Cevapları İncele</button>
-        <div id="reviewArea" class="hidden" style="margin-top: 20px; text-align: left;"></div>
-        <button disabled style="background-color: #ccc; margin-top: 20px;">Oturum Kapandı</button>
+
+        <div class="action-buttons">
+            <button onclick="toggleReview()" class="secondary-btn">🔍 Cevapları İncele</button>
+        </div>
+        
+        <div id="reviewArea" class="review-list hidden"></div>
     </div>
 
-    <div id="adminPanel" class="container hidden" style="border: 2px solid #e17055;">
-        <h2>🛠️ Hoca Paneli</h2>
-        <div id="adminLogin">
-            <input type="password" id="adminPass" placeholder="Şifre">
-            <button onclick="adminLogin()">Giriş</button>
+    <div id="adminPanel" class="card admin-card hidden">
+        <div class="card-header">
+            <h2>🛠️ Hoca Paneli</h2>
+            <button onclick="closeAdmin()" class="close-icon">✕</button>
         </div>
+        
+        <div id="adminLogin">
+            <input type="password" id="adminPass" placeholder="Şifre Giriniz">
+            <button onclick="adminLogin()" class="primary-btn">Giriş</button>
+        </div>
+
         <div id="adminControls" class="hidden">
-            <button onclick="deleteQuestions()" style="background-color:#d63031;">🗑️ Sil</button>
-            <textarea id="jsonInput" placeholder="JSON Kodunu Yapıştır..." style="width:100%; height:100px; margin:10px 0;"></textarea>
-            <button onclick="uploadQuestions()" style="background-color:#00b894;">📥 Yükle</button>
+            <div class="admin-actions">
+                <button onclick="deleteQuestions()" class="danger-btn">🗑️ Tümünü Sil</button>
+            </div>
+            <textarea id="jsonInput" placeholder="Gemini JSON kodunu buraya yapıştır..."></textarea>
+            <button onclick="uploadQuestions()" class="success-btn">📥 Soruları Yükle</button>
             <p id="adminStatus"></p>
         </div>
-        <button onclick="closeAdmin()" style="background:#636e72;">Çıkış</button>
     </div>
-    <footer style="margin-top: 40px; color: #bdc3c7; cursor: pointer; font-size: 0.8rem;">
-        <span onclick="toggleAdmin()">🔒 Yönetici</span>
+
+    <footer class="footer">
+        <span onclick="toggleAdmin()">🔒 Yönetici Girişi</span>
     </footer>
 
     <script src="script.js"></script>
