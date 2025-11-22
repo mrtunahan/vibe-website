@@ -3,26 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibe Coding Web Sitem</title>
+    <title>Online Quiz Sistemi</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <nav>
-        <h1>✨ Vibe Coding</h1>
-    </nav>
+    <div class="container" id="loginScreen">
+        <h1>🎓 Öğrenci Girişi</h1>
+        <p>Lütfen sınava başlamak için bilgilerinizi giriniz.</p>
+        
+        <input type="text" id="studentName" placeholder="Adınız Soyadınız">
+        <input type="number" id="studentId" placeholder="Öğrenci Numaranız">
+        
+        <button onclick="startQuiz()">Sınavı Başlat</button>
+    </div>
 
-    <main>
-        <section class="hero">
-            <h2>Merhaba Dünya!</h2>
-            <p>Bu benim GitHub'da yayınladığım ilk web sitem.</p>
-            <button id="vibeBtn">Vibe Check ✅</button>
-        </section>
-    </main>
+    <div class="container hidden" id="quizScreen">
+        <div class="header-info">
+            <span id="displayName">Öğrenci: ...</span>
+            <span id="timer">Süre: --</span>
+        </div>
+        
+        <div id="questionContainer">
+            </div>
 
-    <footer>
-        <p>2024 | GitHub Pages ile yayınlandı</p>
-    </footer>
+        <button onclick="finishQuiz()">Sınavı Bitir</button>
+    </div>
+
+    <div class="container hidden" id="resultScreen">
+        <h1>🏁 Sınav Tamamlandı</h1>
+        <div class="score-card">
+            <h2 id="resultName"></h2>
+            <p>Öğrenci No: <span id="resultId"></span></p>
+            <hr>
+            <h3>Puanınız: <span id="score">0</span> / 100</h3>
+            <p id="feedbackMessage"></p>
+        </div>
+        <button onclick="location.reload()">Çıkış Yap</button>
+    </div>
 
     <script src="script.js"></script>
 </body>
