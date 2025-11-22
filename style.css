@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f0f2f5;
+    background-color: #eef2f3;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,124 +10,103 @@ body {
 
 .container {
     background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     width: 90%;
-    max-width: 600px; /* Genişliği biraz artırdık */
+    max-width: 600px;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
-.hidden { display: none; }
+.hidden { display: none !important; }
+
+h1 { color: #2c3e50; margin-bottom: 10px; }
 
 input {
-    width: 80%;
+    width: 100%;
     padding: 12px;
     margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    border: 2px solid #dfe6e9;
+    border-radius: 8px;
     font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
 }
 
+input:focus { border-color: #0984e3; }
+
 button {
-    background-color: #007bff;
+    background-color: #0984e3;
     color: white;
     border: none;
-    padding: 12px 30px;
-    border-radius: 5px;
+    padding: 14px 30px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 1rem;
     margin-top: 15px;
+    width: 100%;
+    font-weight: bold;
     transition: background 0.3s;
 }
 
-button:hover { background-color: #0056b3; }
+button:hover { background-color: #74b9ff; }
 
 .warning-box {
-    background-color: #ffebee;
-    color: #c62828;
+    background-color: #fff3cd;
+    color: #856404;
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 8px;
     font-size: 0.9rem;
     margin: 15px 0;
-    border: 1px solid #ffcdd2;
+    text-align: left;
+    border-left: 5px solid #ffc107;
 }
 
-/* Sınav Ekranı Stilleri */
+/* Sınav Alanı */
 .header-info {
     display: flex;
     justify-content: space-between;
     margin-bottom: 20px;
-    font-weight: bold;
-    color: #555;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
+    font-weight: 600;
+    color: #636e72;
+    border-bottom: 1px solid #dfe6e9;
+    padding-bottom: 15px;
 }
 
-.question-card {
-    background: #fff;
-    text-align: left;
-    min-height: 200px;
-}
-
-.q-text {
-    font-size: 1.25rem;
-    margin-bottom: 25px;
-    font-weight: 500;
-}
+.q-text { font-size: 1.3rem; margin: 20px 0; color: #2d3436; font-weight: 500; }
 
 .options-grid label {
-    display: block;
-    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    background: #f1f2f6;
     padding: 15px;
     margin: 10px 0;
-    border: 1px solid #ddd;
     border-radius: 8px;
     cursor: pointer;
     transition: 0.2s;
-    font-size: 1rem;
+    text-align: left;
 }
 
-.options-grid label:hover {
-    background: #e9ecef;
-    border-color: #bbb;
-}
+.options-grid label:hover { background: #dcdde1; }
+.options-grid input { width: auto; margin-right: 15px; }
 
-.options-grid input {
-    width: auto;
-    margin-right: 10px;
-}
-
-/* Ajan Stili */
+/* Ajan Kutusu */
 .agent-box {
-    margin-top: 25px;
-    background-color: #fff3cd;
-    border: 1px solid #ffeeba;
+    margin-top: 20px;
+    background-color: #d1ecf1;
+    color: #0c5460;
     padding: 15px;
     border-radius: 10px;
     display: flex;
     align-items: center;
     gap: 15px;
-    animation: fadeIn 0.5s ease;
+    animation: popIn 0.5s ease;
 }
 
-.agent-avatar { font-size: 2.5rem; }
-.agent-message { text-align: left; font-size: 0.95rem; color: #856404; }
+.agent-avatar { font-size: 2rem; }
 
-.controls {
-    margin-top: 30px;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.score-card {
-    background: #e8f4fd;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
 }

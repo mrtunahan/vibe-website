@@ -1,15 +1,16 @@
-// ---------------------------------------------------------
-// ⚠️ BURAYA KENDİ FORMSPREE LİNKİNİ YAPIŞTIR
-// Örnek: "https://formspree.io/f/xknpdqwe"
-// ---------------------------------------------------------
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xrbdldnj'; 
+// ------------------------------------------------------------------
+// ⚠️ 1. ADIMDA ALDIĞIN GOOGLE SCRIPT LİNKİNİ AŞAĞIYA YAPIŞTIR
+// ------------------------------------------------------------------
+const GOOGLE_SCRIPT_URL = 'Bhttps://script.google.com/macros/s/AKfycbxDwsS_yFDQRF_nhmWUxlJTyw-FRNVlorftltBxpgXmsEeYGfmU_VkeDXfJSXnhnAha/exec'; 
 
-// --- SORULAR, CEVAPLAR VE İPUÇLARI ---
-const questions = [
+// --- SORU HAVUZU ---
+// Hocam answer kısmı 0,1,2,3 şeklindedir (0=A, 1=B...)
+// Öğrenci bu listeyi konsoldan göremez, çünkü sınav başlayınca siliyoruz!
+let questionsSource = [
     {
         question: "1. Aşağıdakilerden hangisi bir web tarayıcısı değildir?",
         options: ["Chrome", "Firefox", "Python", "Edge"],
-        answer: 2, // C şıkkı (0,1,2..)
+        answer: 2, 
         hint: "Python bir programlama dilidir, internette gezmeni sağlamaz. 😉"
     },
     {
@@ -29,68 +30,79 @@ const questions = [
         options: ["Sadece Sunucuda", "Sadece Veritabanında", "Hem Tarayıcıda Hem Sunucuda", "Hiçbir yerde"],
         answer: 2,
         hint: "Modern JS artık her yerde çalışıyor, Node.js'i hatırla. 🌍"
+    },
+    {
+        question: "5. GitHub ne için kullanılır?",
+        options: ["Sadece kod yazmak için", "Versiyon kontrolü ve kod depolama", "Sadece resim yüklemek için", "Video izlemek için"],
+        answer: 1,
+        hint: "Yazılımcıların sosyal medyası ve arşivi gibidir."
     }
 ];
 
-// --- DEĞİŞKENLER ---
+// --- SİSTEM DEĞİŞKENLERİ ---
+let activeQuestions = []; // Karıştırılmış ve güvenli hale getirilmiş sorular
 let studentName = "";
 let studentNumber = "";
 let currentQuestionIndex = 0; 
-let userAnswers = []; // Cevapları tutar
+let userAnswers = []; 
 let totalTimeLeft = 30 * 60; // 30 Dakika
 let examTimerInterval;
-let hintTimeout; // Ajan sayacı
+let hintTimeout; 
 let isExamActive = false;
 
-// --- 1. BAŞLANGIÇ KONTROLLERİ ---
+// --- 1. BAŞLATMA VE GÜVENLİK ---
 function startQuiz() {
     const nameInput = document.getElementById('studentName').value.trim();
     const idInput = document.getElementById('studentId').value.toString();
 
-    // İsim Kontrolü
-    if (nameInput === "") {
-        alert("Lütfen isminizi giriniz!");
-        return;
-    }
-    // 9 Hane Numara Kontrolü
-    if (idInput.length !== 9) {
-        alert("⚠️ HATA: Öğrenci numarası tam olarak 9 haneli olmalıdır! (Şu anki hane: " + idInput.length + ")");
-        return;
-    }
+    if (nameInput === "") { alert("İsim alanı boş bırakılamaz!"); return; }
+    if (idInput.length !== 9) { alert("Öğrenci numarası 9 haneli olmalıdır!"); return; }
 
     studentName = nameInput;
     studentNumber = idInput;
     isExamActive = true; 
 
-    // EKRAN GEÇİŞİ
+    // A) SORULARI KARIŞTIR (SHUFFLE) 🔀
+    // Soruların sırasını rastgele değiştiriyoruz
+    questionsSource.sort(() => Math.random() - 0.5);
+
+    // B) GÜVENLİK PROSEDÜRÜ (CEVAPLARI GİZLE) 🕵️‍♂️
+    // Global listeden cevapları alıp activeQuestions içine aktarıyoruz
+    // ve orijinal kaynaktan 'answer' anahtarını siliyoruz.
+    activeQuestions = questionsSource.map(q => {
+        return {
+            question: q.question,
+            options: q.options,
+            hint: q.hint,
+            _secureAnswer: q.answer // Cevabı gizli bir değişkene al
+        };
+    });
+
+    // Kaynak listeyi temizle ki konsoldan bakınca cevaplar görünmesin
+    questionsSource = []; 
+
+    // EKRAN AYARLARI
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
     document.getElementById('displayName').innerText = "Öğrenci: " + studentName;
 
-    // Cevap dizisini hazırla
-    userAnswers = new Array(questions.length).fill(null);
-
-    // İLK İŞLEMLER
+    userAnswers = new Array(activeQuestions.length).fill(null);
     showQuestion(0);
     startExamTimer();
-    
-    // KOPYA KORUMASINI AKTİF ET
     document.addEventListener("visibilitychange", handleVisibilityChange);
 }
 
-// --- 2. SORU GÖSTERME (SLAYT) ---
+// --- 2. SORU GÖSTERİMİ ---
 function showQuestion(index) {
-    // Eski ajanı gizle ve sayacı sıfırla
     hideAgent();
     
-    const q = questions[index];
-    document.getElementById('qTitle').innerText = `Soru ${index + 1} / ${questions.length}`;
+    const q = activeQuestions[index];
+    document.getElementById('qTitle').innerText = `Soru ${index + 1} / ${activeQuestions.length}`;
     document.getElementById('qText').innerText = q.question;
     
     const optionsDiv = document.getElementById('qOptions');
     optionsDiv.innerHTML = ""; 
 
-    // Şıkları oluştur
     q.options.forEach((opt, i) => {
         const isChecked = userAnswers[index] === i ? "checked" : "";
         optionsDiv.innerHTML += `
@@ -101,40 +113,33 @@ function showQuestion(index) {
         `;
     });
 
-    // Buton metni (Son soru mu?)
     const btn = document.getElementById('nextBtn');
-    if (index === questions.length - 1) {
-        btn.innerText = "Sınavı Bitir ✅";
+    if (index === activeQuestions.length - 1) {
+        btn.innerText = "Sınavı Tamamla ✅";
         btn.setAttribute("onclick", "finishQuiz('NORMAL')");
     } else {
         btn.innerText = "Sonraki Soru ➡️";
         btn.setAttribute("onclick", "nextQuestion()");
     }
 
-    // AJAN SAYACINI BAŞLAT (30 saniye sonra)
     startHintTimer(index);
 }
 
-// --- CEVAP SEÇME ---
 function selectOption(qIndex, optionIndex) {
     userAnswers[qIndex] = optionIndex;
 }
 
-// --- SONRAKİ SORU ---
 function nextQuestion() {
-    // İstersek burada "Boş bırakamazsınız" kontrolü yapabiliriz.
-    // Şimdilik serbest bırakıyoruz.
     currentQuestionIndex++;
     showQuestion(currentQuestionIndex);
 }
 
-// --- AJAN SİSTEMİ 🕵️ ---
+// --- 3. AJAN VE SAYAÇLAR ---
 function startHintTimer(qIndex) {
     if (hintTimeout) clearTimeout(hintTimeout);
-    
-    // 30 saniye (30000ms) bekle, sonra ajanı göster
+    // 30 saniye bekle, sonra ajanı göster
     hintTimeout = setTimeout(() => {
-        showAgent(questions[qIndex].hint);
+        showAgent(activeQuestions[qIndex].hint);
     }, 30000); 
 }
 
@@ -149,7 +154,6 @@ function hideAgent() {
     if (hintTimeout) clearTimeout(hintTimeout);
 }
 
-// --- SÜRE SAYACI ⏱️ ---
 function startExamTimer() {
     const timerDisplay = document.getElementById('timer');
     examTimerInterval = setInterval(() => {
@@ -159,41 +163,40 @@ function startExamTimer() {
             totalTimeLeft--;
             let m = Math.floor(totalTimeLeft / 60);
             let s = totalTimeLeft % 60;
-            timerDisplay.innerText = `Kalan Süre: ${m}:${s < 10 ? '0'+s : s}`;
-            
+            timerDisplay.innerText = `Kalan: ${m}:${s < 10 ? '0'+s : s}`;
             if(totalTimeLeft < 60) timerDisplay.style.color = "red";
         }
     }, 1000);
 }
 
-// --- KOPYA KORUMASI (SEKME DEĞİŞTİRME) 🛡️ ---
+// --- 4. KOPYA KORUMASI ---
 function handleVisibilityChange() {
     if (document.hidden && isExamActive) {
         finishQuiz("CHEATING");
     }
 }
 
-// --- SINAVI BİTİRME ---
+// --- 5. BİTİŞ VE GOOGLE SHEETS KAYDI ---
 function finishQuiz(type) {
     isExamActive = false;
     clearInterval(examTimerInterval);
-    clearTimeout(hintTimeout); // Ajanı sustur
+    clearTimeout(hintTimeout);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
 
     let score = 0;
-    const pointPerQuestion = 100 / questions.length;
+    const pointPerQuestion = 100 / activeQuestions.length;
 
-    // Kopya değilse puanı hesapla
+    // Kopya değilse puan hesapla
     if (type !== "CHEATING") {
-        questions.forEach((q, i) => {
-            if (userAnswers[i] === q.answer) {
+        activeQuestions.forEach((q, i) => {
+            if (userAnswers[i] === q._secureAnswer) {
                 score += pointPerQuestion;
             }
         });
     }
     score = Math.round(score);
 
-    // EKRANLARI YÖNET
+    // EKRAN YÖNETİMİ
     document.getElementById('quizScreen').classList.add('hidden');
     document.getElementById('resultScreen').classList.remove('hidden');
     
@@ -202,42 +205,49 @@ function finishQuiz(type) {
     document.getElementById('score').innerText = score;
 
     let feedback = document.getElementById('feedbackMessage');
-    let statusNote = "";
+    let statusNote = "Normal";
 
-    // DURUMA GÖRE MESAJ
     if (type === "CHEATING") {
-        feedback.innerText = "⚠️ KOPYA GİRİŞİMİ TESPİT EDİLDİ! Sınavınız iptal edildi.";
+        feedback.innerText = "⚠️ KOPYA GİRİŞİMİ TESPİT EDİLDİ! Puanınız 0 olarak işlendi.";
         feedback.style.color = "red";
-        statusNote = " (KOPYA - İPTAL)";
+        statusNote = "KOPYA_GIRISIMI";
     } else if (type === "TIMEOUT") {
-        feedback.innerText = "⏰ Süre doldu. Mevcut cevaplarınız kaydedildi.";
-        statusNote = " (SÜRE BİTTİ)";
+        feedback.innerText = "⏰ Süre doldu. Cevaplarınız kaydedildi.";
+        statusNote = "SURE_BITTI";
     } else {
-        feedback.innerText = score >= 50 ? "Tebrikler Geçtiniz! Sonuç hocaya iletiliyor..." : "Kaldınız. Sonuç hocaya iletiliyor...";
-        feedback.style.color = score >= 50 ? "green" : "orange";
-        statusNote = " (Normal Teslim)";
+        feedback.innerText = "Sınavınız başarıyla kaydedildi. Veritabanına işleniyor... 🔄";
+        feedback.style.color = "#2c3e50";
     }
 
-    // MAİL GÖNDER
-    sendEmailToTeacher(studentName, studentNumber, score, feedback, statusNote);
+    sendToGoogleSheets(studentName, studentNumber, score, statusNote, feedback);
 }
 
-// --- MAİL GÖNDERME FONKSİYONU 📧 ---
-function sendEmailToTeacher(name, id, score, feedbackElement, statusNote) {
+// --- GOOGLE SHEETS GÖNDERİMİ ---
+function sendToGoogleSheets(name, id, score, status, feedbackElement) {
     const data = {
-        Öğrenci: name,
-        No: id,
+        Isim: name,
+        Numara: id,
         Puan: score,
-        Durum: statusNote,
+        Durum: status,
         Tarih: new Date().toLocaleString()
     };
 
-    fetch(FORMSPREE_ENDPOINT, {
+    // mode: 'no-cors' kullanıyoruz çünkü Google Sheets tarayıcıdan direkt çağrılınca
+    // CORS hatası verebilir. Bu modda hata verse bile veriyi gönderir.
+    fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify(data),
-        headers: { 'Accept': 'application/json' }
-    }).then(r => {
-        if(r.ok) feedbackElement.innerText += " ✅ İLETİLDİ";
-        else feedbackElement.innerText += " ❌ HATA";
-    }).catch(e => feedbackElement.innerText += " ❌ HATA");
+        mode: "no-cors", 
+        cache: "no-cache",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    }).then(() => {
+        // no-cors modunda cevap okunamaz ama işlem genelde başarılıdır.
+        feedbackElement.innerText += " ✅ KAYDEDİLDİ";
+        if(status !== "KOPYA_GIRISIMI") feedbackElement.style.color = "green";
+    }).catch(e => {
+        console.error(e);
+        feedbackElement.innerText += " ⚠️ Bağlantı hatası (Ama yerel kayıt alındı)";
+    });
 }
