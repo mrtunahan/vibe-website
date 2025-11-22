@@ -3,6 +3,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #eef2f3;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
@@ -17,11 +18,13 @@ body {
     max-width: 600px;
     text-align: center;
     transition: all 0.3s ease;
+    margin-bottom: 20px;
 }
 
 .hidden { display: none !important; }
 
 h1 { color: #2c3e50; margin-bottom: 10px; }
+h2 { color: #d35400; }
 
 input {
     width: 100%;
@@ -33,7 +36,6 @@ input {
     box-sizing: border-box;
     outline: none;
 }
-
 input:focus { border-color: #0984e3; }
 
 button {
@@ -49,8 +51,8 @@ button {
     font-weight: bold;
     transition: background 0.3s;
 }
-
 button:hover { background-color: #74b9ff; }
+button:disabled { background-color: #b2bec3; cursor: not-allowed; }
 
 .warning-box {
     background-color: #fff3cd;
@@ -63,7 +65,6 @@ button:hover { background-color: #74b9ff; }
     border-left: 5px solid #ffc107;
 }
 
-/* Sınav Alanı */
 .header-info {
     display: flex;
     justify-content: space-between;
@@ -87,11 +88,9 @@ button:hover { background-color: #74b9ff; }
     transition: 0.2s;
     text-align: left;
 }
-
 .options-grid label:hover { background: #dcdde1; }
 .options-grid input { width: auto; margin-right: 15px; }
 
-/* Ajan Kutusu */
 .agent-box {
     margin-top: 20px;
     background-color: #d1ecf1;
@@ -103,7 +102,6 @@ button:hover { background-color: #74b9ff; }
     gap: 15px;
     animation: popIn 0.5s ease;
 }
-
 .agent-avatar { font-size: 2rem; }
 
 @keyframes popIn {

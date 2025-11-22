@@ -10,7 +10,7 @@
 
     <div class="container" id="loginScreen">
         <h1>🎓 Final Sınavı Giriş</h1>
-        <p>Sisteme giriş yapmak için bilgilerinizi doğrulayınız.</p>
+        <p>Sisteme giriş yapmak için bilgilerinizi giriniz.</p>
         
         <input type="text" id="studentName" placeholder="Ad Soyad Giriniz">
         <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
@@ -20,11 +20,11 @@
             ⚠️ <strong>SINAV KURALLARI:</strong><br>
             1. Süre 30 dakikadır.<br>
             2. Sorular her öğrenciye karışık sırada gelir.<br>
-            3. Sekme değiştirmek veya ekranı kapatmak <strong>KOPYA</strong> sayılır ve sınav iptal olur.<br>
+            3. Sekme değiştirmek <strong>KOPYA</strong> sayılır ve sınav iptal olur.<br>
             4. Cevaplarınız otomatik olarak veritabanına işlenir.
         </div>
         
-        <button onclick="startQuiz()">Sınavı Başlat</button>
+        <button id="startBtn" onclick="startQuiz()" disabled>Sorular Yükleniyor... ⏳</button>
     </div>
 
     <div class="container hidden" id="quizScreen">
@@ -34,7 +34,7 @@
         </div>
         
         <div id="questionCard" class="question-card">
-            <h3 id="qTitle">Soru yükleniyor...</h3>
+            <h3 id="qTitle">Soru Yükleniyor...</h3>
             <p id="qText" class="q-text">...</p>
             <div id="qOptions" class="options-grid"></div>
         </div>
@@ -42,7 +42,7 @@
         <div id="agentBox" class="agent-box hidden">
             <div class="agent-avatar">🕵️</div>
             <div class="agent-message">
-                <strong>Asistan İpucu:</strong>
+                <strong>İpucu Ajanı:</strong>
                 <span id="agentText">...</span>
             </div>
         </div>
@@ -63,6 +63,30 @@
         </div>
         <button disabled style="background-color: #ccc; cursor: not-allowed;">Oturum Kapandı</button>
     </div>
+
+    <div id="adminPanel" class="container hidden" style="border: 2px solid #e17055;">
+        <h2>🛠️ Hoca Paneli</h2>
+        <div id="adminLogin">
+            <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
+            <button onclick="adminLogin()" style="background-color: #2d3436;">Giriş Yap</button>
+        </div>
+
+        <div id="adminControls" class="hidden">
+            <p>Soru Bankası Yönetimi</p>
+            <button onclick="deleteQuestions()" style="background-color: #d63031;">🗑️ Tüm Soruları Sil</button>
+            <hr>
+            <textarea id="jsonInput" placeholder="Gemini'den aldığın JSON kodunu buraya yapıştır..." 
+                      style="width:100%; height:150px; margin-top:10px; padding:10px; border:1px solid #ccc; border-radius:5px;"></textarea>
+            <button onclick="uploadQuestions()" style="background-color: #00b894;">📥 Soruları Yükle</button>
+            <p id="adminStatus" style="font-size:0.8rem; color:gray; margin-top:5px;"></p>
+        </div>
+        
+        <button onclick="closeAdmin()" style="background-color: #636e72; margin-top:20px;">Çıkış</button>
+    </div>
+
+    <footer style="margin-top: 50px; color: #ccc; font-size: 0.8rem;">
+        <span style="cursor: pointer;" onclick="toggleAdmin()">🔒 Yönetici Girişi</span>
+    </footer>
 
     <script src="script.js"></script>
 </body>
