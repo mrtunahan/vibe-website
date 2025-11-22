@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------
-// ⚠️ YENİ KOPYALADIĞIN GOOGLE APPS SCRIPT LINKINI BURAYA YAPIŞTIR
+// ⚠️ ÇALIŞAN GOOGLE APPS SCRIPT LINKINI BURAYA YAPIŞTIR
 // ------------------------------------------------------------------
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSaooMwR9YWESL9A45b2GIGuXIGTON4BPtpHexdW8OUSkpTreci5Vkn-bRuPIm4X8Q/exec'; 
 
@@ -33,7 +33,6 @@ function startQuiz() {
     openFullscreen();
     studentName = name; studentNumber = id; isExamActive = true; 
 
-    // Soruları Karıştır
     let shuffled = [...questionsSource].sort(() => Math.random() - 0.5);
     activeQuestions = shuffled.map(q => ({
         ...q, _secureAnswer: q.answer, topic: q.topic || "Genel", image: q.image || ""
@@ -46,18 +45,15 @@ function startQuiz() {
     userAnswers = new Array(activeQuestions.length).fill(null);
     showQuestion(0);
     
-    // SAYAÇ BAŞLAT (Hata Düzeltildi)
     if(examTimerInterval) clearInterval(examTimerInterval);
     startExamTimer();
 
-    // KOPYA KORUMASI AKTİF (Hata Düzeltildi)
     document.addEventListener("visibilitychange", handleVisibilityChange);
 }
 
 function showQuestion(index) {
     hideAgent();
     
-    // Progress Bar
     const progress = ((index + 1) / activeQuestions.length) * 100;
     document.getElementById('progressBar').style.width = `${progress}%`;
 
@@ -65,7 +61,6 @@ function showQuestion(index) {
     document.getElementById('qIndex').innerText = `SORU ${index + 1}`;
     document.getElementById('qText').innerText = q.question;
     
-    // Görsel Kontrolü
     const imgEl = document.getElementById('qImage');
     if (q.image && q.image.trim() !== "") { imgEl.src = q.image; imgEl.classList.remove('hidden'); }
     else { imgEl.classList.add('hidden'); }
@@ -91,14 +86,12 @@ function showQuestion(index) {
 function selectOption(i, opt) { userAnswers[i] = opt; }
 function nextQuestion() { currentQuestionIndex++; showQuestion(currentQuestionIndex); }
 
-// --- İTİRAZ ---
 function reportObjection() {
     const q = activeQuestions[currentQuestionIndex];
     const reason = prompt("İtiraz sebebiniz?");
     if (reason) fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({type:"OBJECTION", Isim:studentName, Soru:q.question, Sebep:reason})}).then(()=>alert("İletildi."));
 }
 
-// --- SAYAÇ ---
 function startExamTimer() {
     totalTimeLeft = 30 * 60; 
     examTimerInterval = setInterval(() => {
@@ -111,12 +104,10 @@ function startExamTimer() {
     }, 1000);
 }
 
-// --- KOPYA KORUMASI ---
 function handleVisibilityChange() {
     if(document.hidden && isExamActive) finishQuiz("CHEATING");
 }
 
-// --- BİTİŞ ---
 function finishQuiz(type) {
     if(!isExamActive) return;
     isExamActive = false; 
@@ -203,6 +194,15 @@ function sendToGoogleSheets(data, fb) { fetch(GOOGLE_SCRIPT_URL, {method:"POST",
 
 function toggleAdmin() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('adminPanel').classList.remove('hidden'); }
 function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
-function adminLogin() { if(document.getElementById('adminPass').value==="1234") document.getElementById('adminControls').classList.remove('hidden'); }
+
+// 🔥 ŞİFRE GÜNCELLENDİ BURADA
+function adminLogin() { 
+    if(document.getElementById('adminPass').value === "zeynep1605") {
+        document.getElementById('adminControls').classList.remove('hidden'); 
+    } else {
+        alert("Hatalı Şifre!");
+    }
+}
+
 function deleteQuestions() { if(confirm("Sil?")) fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({type:"DELETE_ALL"})}).then(()=>alert("Silindi")); }
 function uploadQuestions() { try{ fetch(GOOGLE_SCRIPT_URL, {method:"POST", mode:"no-cors", body:JSON.stringify({type:"ADD_BULK", questions:JSON.parse(document.getElementById('jsonInput').value)})}).then(()=>alert("Yüklendi")); }catch(e){alert("JSON Hata");} }
