@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online Sınav Portalı</title>
+    <title>Akademik Sınav Sistemi</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="container" id="loginScreen">
-        <img src="https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/e2/4d/55/e24d55cf-c1ab-0d7b-bede-cb4e96634933/AppIcon-0-0-1x_U007emarketing-0-0-0-7-0-0-sRGB-0-0-0-GLES2_U002c0-512MB-85-220-0-0.png/1200x630wa.png" alt="Uni Logo" class="uni-logo">
+        <img src="https://cdn-icons-png.flaticon.com/512/2997/2997336.png" alt="Uni Logo" class="uni-logo">
         
         <h1>🎓 Final Sınavı Giriş</h1>
-        <p>Lütfen kimlik bilgilerinizi doğrulayınız.</p>
+        <p>Sisteme giriş yapmak için bilgilerinizi giriniz.</p>
         
         <input type="text" id="studentName" placeholder="Ad Soyad Giriniz">
         <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
@@ -20,10 +20,9 @@
         
         <div class="warning-box">
             ⚠️ <strong>SINAV KURALLARI:</strong><br>
-            1. Süre <strong>30 dakikadır.</strong><br>
-            2. Başlayınca tarayıcı <strong>Tam Ekran</strong> moduna geçer.<br>
-            3. Sekme değiştirmek <strong>KOPYA</strong> sayılır ve sınav iptal olur.<br>
-            4. Sorular ve şıklar her öğrenciye farklı sırada gelir.
+            1. Süre 30 dakikadır. Tarayıcı <strong>Tam Ekran</strong> olur.<br>
+            2. Sekme değiştirmek <strong>KOPYA</strong> sayılır.<br>
+            3. Sınav sonunda detaylı analiz raporu alacaksınız.
         </div>
         
         <button id="startBtn" onclick="startQuiz()" disabled>Sistem Yükleniyor... ⏳</button>
@@ -44,8 +43,7 @@
         <div id="agentBox" class="agent-box hidden">
             <div class="agent-avatar">🕵️</div>
             <div class="agent-message">
-                <strong>İpucu Ajanı:</strong>
-                <span id="agentText">...</span>
+                <strong>İpucu Ajanı:</strong> <span id="agentText">...</span>
             </div>
         </div>
 
@@ -54,29 +52,38 @@
         </div>
     </div>
 
-    <div class="container hidden" id="resultScreen">
-        <h1>🏁 Sınav Tamamlandı</h1>
+    <div class="container hidden" id="resultScreen" style="max-width: 800px;">
+        <h1>🏁 Sınav Sonlandı</h1>
         
         <div class="score-card">
             <h2 id="resultName"></h2>
-            <p>Öğrenci No: <span id="resultId"></span></p>
+            <p>No: <span id="resultId"></span></p>
             <hr>
             <h3>Puan: <span id="score">0</span> / 100</h3>
             <p id="feedbackMessage" style="font-weight: bold;"></p>
             
+            <div id="analysisBox" class="analysis-box hidden">
+                <h3>🤖 Yapay Zeka Analiz Raporu</h3>
+                <div id="analysisText">Hesaplanıyor...</div>
+            </div>
+
             <div id="certificateArea" class="hidden certificate-box">
                 <div class="cert-icon">🏆</div>
                 <h3>BAŞARI BELGESİ</h3>
                 <p>Sayın <strong id="certName">...</strong>,</p>
-                <p>Bu dersin final sınavını başarıyla tamamladınız.</p>
+                <p>Bu dersi başarıyla geçtiniz.</p>
                 <div class="cert-footer">
                     <small>Tarih: <span id="certDate"></span></small>
-                    <small>İmza: Sistem Onayı ✅</small>
+                    <small>Onay: Sistem ✅</small>
                 </div>
             </div>
         </div>
 
-        <button disabled style="background-color: #ccc; cursor: not-allowed;">Oturum Kapandı</button>
+        <button onclick="toggleReview()" style="background-color: #6c5ce7; margin-top: 15px;">🔍 Cevaplarımı ve Doğruları İncele</button>
+        
+        <div id="reviewArea" class="hidden" style="margin-top: 20px; text-align: left;"></div>
+
+        <button disabled style="background-color: #ccc; cursor: not-allowed; margin-top: 20px;">Oturum Kapandı</button>
     </div>
 
     <div id="adminPanel" class="container hidden" style="border: 2px solid #e17055;">
@@ -85,22 +92,18 @@
             <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
             <button onclick="adminLogin()" style="background-color: #2d3436;">Giriş Yap</button>
         </div>
-
         <div id="adminControls" class="hidden">
-            <p>Soru Bankası Yönetimi</p>
             <button onclick="deleteQuestions()" style="background-color: #d63031;">🗑️ Tüm Soruları Sil</button>
             <hr>
-            <textarea id="jsonInput" placeholder="Gemini'den aldığın JSON kodunu buraya yapıştır..." 
-                      style="width:100%; height:150px; margin-top:10px; padding:10px; border:1px solid #ccc; border-radius:5px;"></textarea>
+            <textarea id="jsonInput" placeholder="Gemini JSON kodunu buraya yapıştır..." style="width:100%; height:100px; margin:10px 0; padding:10px;"></textarea>
             <button onclick="uploadQuestions()" style="background-color: #00b894;">📥 Soruları Yükle</button>
-            <p id="adminStatus" style="font-size:0.8rem; color:gray; margin-top:5px;"></p>
+            <p id="adminStatus" style="font-size:0.8rem; color:gray;"></p>
         </div>
-        
         <button onclick="closeAdmin()" style="background-color: #636e72; margin-top:20px;">Çıkış</button>
     </div>
 
-    <footer style="margin-top: 50px; color: #bdc3c7; font-size: 0.8rem;">
-        <span style="cursor: pointer;" onclick="toggleAdmin()">🔒 Yönetici Girişi</span>
+    <footer style="margin-top: 40px; color: #bdc3c7; cursor: pointer; font-size: 0.8rem;">
+        <span onclick="toggleAdmin()">🔒 Yönetici Girişi</span>
     </footer>
 
     <script src="script.js"></script>
