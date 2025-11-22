@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------
 // ⚠️ YENİ DAĞITIMDAN ALDIĞIN LİNKİ BURAYA YAPIŞTIR
 // ------------------------------------------------------------------
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzTAtxrn7ZTVlGX93_Jjz4RP5KQlfEPqF1QKvEBfsB5lyiw5odEAc1BaXsrcGqyMGWf/exechttps://script.google.com/macros/s/AKfycbzkJfwsaXIi4keFfqFmDTamOAH_g5YfkEtz-1oC3bwWju4RvGUhwMesr5ynw_dm6sMd/exec'; 
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9VXMAIxz3Aps5oOxEX75n7g0PT3nKskt2nPH0xyxy3NndNgxS5ZVOaYS_dMp-kVwV/exec'; 
 
 // --- DEĞİŞKENLER ---
 let questionsSource = []; 
