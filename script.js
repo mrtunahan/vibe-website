@@ -1,19 +1,26 @@
-// --- HOCAM SORULARI BURADAN DÜZENLEYEBİLİRSİNİZ ---
+// ---------------------------------------------------------
+// ⚠️ AŞAĞIDAKİ LİNKE FORMSPREE'DEN ALDIĞIN LİNKİ YAPIŞTIR
+// Örnek: "https://formspree.io/f/xknpdqwe"
+// ---------------------------------------------------------
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xrbdldnj'; 
+
+
+// --- SORULAR (İstediğin gibi değiştir hocam) ---
 const questions = [
     {
         question: "1. Aşağıdakilerden hangisi bir web tarayıcısı değildir?",
         options: ["Chrome", "Firefox", "Python", "Edge"],
-        answer: 2 // (0:A, 1:B, 2:C, 3:D) -> Yani Doğru cevap: Python
+        answer: 2 
     },
     {
         question: "2. HTML'in açılımı nedir?",
         options: ["Hyper Text Markup Language", "High Tech Modern Language", "Hyper Transfer Main Link", "Home Tool Markup Language"],
-        answer: 0 // Doğru cevap: A şıkkı
+        answer: 0 
     },
     {
         question: "3. CSS ne işe yarar?",
         options: ["Veri tabanı yönetir", "Siteye stil ve görsellik katar", "Sunucu bağlantısı kurar", "Şifreleri saklar"],
-        answer: 1 // Doğru cevap: B şıkkı
+        answer: 1 
     },
     {
         question: "4. JavaScript hangi tarafta çalışır?",
@@ -22,12 +29,10 @@ const questions = [
     }
 ];
 
-// --- SİSTEM KODLARI (BURAYA DOKUNMANA GEREK YOK) ---
 let studentName = "";
 let studentNumber = "";
 
 function startQuiz() {
-    // İsim ve Numara kontrolü
     const nameInput = document.getElementById('studentName').value;
     const idInput = document.getElementById('studentId').value;
 
@@ -39,7 +44,6 @@ function startQuiz() {
     studentName = nameInput;
     studentNumber = idInput;
 
-    // Ekran değiştir
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
     document.getElementById('displayName').innerText = "Öğrenci: " + studentName;
@@ -82,20 +86,55 @@ function finishQuiz() {
         }
     });
 
+    const finalScore = Math.round(score);
+
     // Sonuç Ekranını Göster
     document.getElementById('quizScreen').classList.add('hidden');
     document.getElementById('resultScreen').classList.remove('hidden');
 
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
-    document.getElementById('score').innerText = Math.round(score);
+    document.getElementById('score').innerText = finalScore;
     
     const feedback = document.getElementById('feedbackMessage');
-    if(score >= 50) {
-        feedback.innerText = "Tebrikler, Geçtiniz! 🎉";
-        feedback.style.color = "green";
+    if(finalScore >= 50) {
+        feedback.innerText = "Tebrikler, Geçtiniz! Sonuç hocaya iletiliyor... ⏳";
+        feedback.style.color = "orange";
     } else {
-        feedback.innerText = "Maalesef Kaldınız. 😔";
-        feedback.style.color = "red";
+        feedback.innerText = "Maalesef Kaldınız. Sonuç hocaya iletiliyor... ⏳";
+        feedback.style.color = "orange";
     }
+
+    // --- MAİL GÖNDERME İŞLEMİ (GİZLİCE) ---
+    sendEmailToTeacher(studentName, studentNumber, finalScore, feedback);
+}
+
+function sendEmailToTeacher(name, id, score, feedbackElement) {
+    
+    // Formspree'ye gidecek veri paketi
+    const data = {
+        Öğrenci_Adı: name,
+        Öğrenci_No: id,
+        Puan: score,
+        Tarih: new Date().toLocaleString()
+    };
+
+    fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+            'Accept': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            feedbackElement.innerText += " ✅ İLETİLDİ";
+            feedbackElement.style.color = score >= 50 ? "green" : "red";
+        } else {
+            feedbackElement.innerText += " ❌ HATA OLUŞTU";
+            alert("Sonuç gönderilemedi! Lütfen ekran görüntüsü alınız.");
+        }
+    }).catch(error => {
+        feedbackElement.innerText += " ❌ HATA OLUŞTU";
+        alert("İnternet bağlantısı hatası! Ekran görüntüsü alınız.");
+    });
 }
