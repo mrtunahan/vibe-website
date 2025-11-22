@@ -1,92 +1,85 @@
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary: #4F46E5;
+    --primary-hover: #4338ca;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --surface: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --danger: #ef4444;
+    --success: #10b981;
+    --warning: #f59e0b;
 }
 
+body {
+    margin: 0; font-family: 'Inter', sans-serif;
+    background: var(--bg-gradient); min-height: 100vh;
+    display: flex; justify-content: center; align-items: center;
+    color: var(--text);
+}
+
+/* Ana Kutu */
 .container {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 90%;
-    max-width: 600px;
-    text-align: center;
-    margin-bottom: 20px;
+    background: var(--surface); width: 90%; max-width: 600px;
+    padding: 40px; border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    text-align: center; position: relative; overflow: hidden; margin: 20px;
 }
 
 .hidden { display: none !important; }
 
-/* Logo */
-.uni-logo {
-    width: 90px; height: 90px; object-fit: contain;
-    margin-bottom: 10px; animation: float 3s ease-in-out infinite;
-}
-@keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-8px);} 100% {transform: translateY(0px);} }
+/* Logolar ve Yazılar */
+.uni-logo { width: 80px; margin-bottom: 15px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.1)); }
+h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 10px 0; color: #111827; }
+p { color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
 
+/* Inputlar */
 input {
-    width: 100%; padding: 12px; margin: 10px 0;
-    border: 2px solid #dfe6e9; border-radius: 8px; box-sizing: border-box;
+    width: 100%; padding: 15px; margin-bottom: 15px;
+    border: 2px solid #e5e7eb; border-radius: 12px;
+    font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s;
 }
+input:focus { border-color: var(--primary); background: #f9fafb; }
 
+/* Butonlar */
 button {
-    background-color: #0984e3; color: white; border: none;
-    padding: 14px; border-radius: 8px; cursor: pointer;
-    width: 100%; font-weight: bold; margin-top: 10px;
+    width: 100%; padding: 16px; border: none; border-radius: 12px;
+    font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px;
 }
-button:hover { background-color: #74b9ff; }
-button:disabled { background-color: #b2bec3; cursor: not-allowed; }
+#startBtn, #nextBtn { background: var(--primary); color: white; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); }
+#startBtn:hover, #nextBtn:hover { background: var(--primary-hover); transform: translateY(-2px); }
+button:disabled { background: #d1d5db; cursor: not-allowed; transform: none; }
 
-.warning-box {
-    background-color: #fff3cd; color: #856404; padding: 12px;
-    border-radius: 8px; font-size: 0.9rem; text-align: left;
-    border-left: 4px solid #ffc107; margin: 15px 0;
-}
+/* Sınav Alanı */
+.progress-container { width: 100%; height: 8px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin-bottom: 25px; }
+.progress-bar { height: 100%; background: var(--success); width: 0%; transition: width 0.5s ease; }
 
-.options-grid label {
-    display: flex; align-items: center; background: #f1f2f6;
-    padding: 12px; margin: 8px 0; border-radius: 8px;
-    cursor: pointer; text-align: left; transition: 0.2s;
-}
-.options-grid label:hover { background: #dcdde1; }
-.options-grid input { width: auto; margin-right: 10px; }
+.header-info { display: flex; justify-content: space-between; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; background: #f3f4f6; padding: 10px 20px; border-radius: 50px; }
+.q-image { width: 100%; max-height: 250px; object-fit: contain; border-radius: 12px; margin-bottom: 15px; border: 1px solid #e5e7eb; }
+.question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.q-badge { background: #eef2ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+.objection-btn { width: auto; padding: 5px 12px; font-size: 0.8rem; background: transparent; color: #d97706; border: 1px solid #d97706; margin: 0; }
+.objection-btn:hover { background: #fffbeb; }
+.q-text { font-size: 1.25rem; font-weight: 600; color: #111827; margin-bottom: 25px; text-align: left; }
 
-.agent-box {
-    margin-top: 20px; background-color: #d1ecf1; color: #0c5460;
-    padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px;
-}
-.agent-avatar { font-size: 1.5rem; }
+.options-grid { display: grid; gap: 12px; }
+.options-grid label { display: flex; align-items: center; padding: 15px; border: 2px solid #f3f4f6; border-radius: 12px; cursor: pointer; transition: 0.2s; text-align: left; font-weight: 500; }
+.options-grid label:hover { border-color: var(--primary); background: #eef2ff; }
+.options-grid input { width: 20px; height: 20px; margin: 0 15px 0 0; }
 
-/* Sertifika */
-.certificate-box {
-    margin-top: 20px; padding: 15px;
-    background: linear-gradient(135deg, #fffdf0 0%, #fff 100%);
-    border: 4px double #f1c40f; border-radius: 10px;
-}
-.cert-icon { font-size: 2.5rem; }
-.cert-footer { border-top: 1px solid #f1c40f; margin-top: 10px; padding-top: 5px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #7f8c8d; }
+.agent-box { background: #ecfdf5; color: #065f46; padding: 15px; border-radius: 12px; margin-top: 20px; display: flex; gap: 10px; text-align: left; }
+.score-card h1 { font-size: 2rem; }
+#score { font-size: 3.5rem; font-weight: 800; color: var(--primary); display: block; margin: 10px 0; }
+.certificate-box { background: linear-gradient(to bottom right, #fff, #fff8dc); border: 4px double #d4af37; padding: 20px; border-radius: 12px; margin-top: 20px; }
+.admin-card { border: 3px solid var(--danger); }
+.warning-box { background: #fffbeb; border-left: 5px solid var(--warning); color: #92400e; padding: 15px; border-radius: 8px; text-align: left; font-size: 0.9rem; margin: 20px 0; }
 
-/* Analiz Kutusu */
-.analysis-box {
-    background-color: #e3f2fd; border-left: 5px solid #2196f3;
-    padding: 15px; margin: 20px 0; text-align: left; border-radius: 5px;
-}
-.analysis-box h3 { color: #1565c0; margin-top: 0; font-size: 1rem; }
-.analysis-box p { margin: 0; font-size: 0.9rem; line-height: 1.4; }
+/* İnceleme Alanı */
+.review-item { border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+.review-item.correct { border-left: 5px solid var(--success); }
+.review-item.wrong { border-left: 5px solid var(--danger); }
+.opt-correct { background: #d1fae5; color: #065f46; font-weight: bold; }
+.opt-wrong { background: #fee2e2; color: #991b1b; text-decoration: line-through; }
 
-/* İnceleme Listesi */
-.review-item {
-    background: #fff; border: 1px solid #ddd;
-    padding: 10px; margin-bottom: 10px; border-radius: 8px;
-}
-.review-item.correct { border-left: 5px solid #2ecc71; }
-.review-item.wrong { border-left: 5px solid #e74c3c; }
-.review-opt { display: block; padding: 4px 8px; margin: 2px 0; border-radius: 4px; font-size: 0.9rem; }
-.opt-correct { background: #d5f5e3; color: #1d8348; font-weight: bold; }
-.opt-wrong { background: #fadbd8; color: #943126; text-decoration: line-through; }
-.opt-topic { float: right; font-size: 0.7rem; background: #eee; padding: 2px 5px; border-radius: 3px; }
+footer { position: fixed; bottom: 10px; color: rgba(255,255,255,0.7); font-size: 0.8rem; cursor: pointer; }
