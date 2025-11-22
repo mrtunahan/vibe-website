@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akademik Sınav Sistemi</title>
+    <title>Online Sınav Portalı</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="container" id="loginScreen">
+        <img src="https://is1-ssl.mzstatic.com/image/thumb/Purple116/v4/e2/4d/55/e24d55cf-c1ab-0d7b-bede-cb4e96634933/AppIcon-0-0-1x_U007emarketing-0-0-0-7-0-0-sRGB-0-0-0-GLES2_U002c0-512MB-85-220-0-0.png/1200x630wa.png" alt="Uni Logo" class="uni-logo">
+        
         <h1>🎓 Final Sınavı Giriş</h1>
-        <p>Sisteme giriş yapmak için bilgilerinizi giriniz.</p>
+        <p>Lütfen kimlik bilgilerinizi doğrulayınız.</p>
         
         <input type="text" id="studentName" placeholder="Ad Soyad Giriniz">
         <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
@@ -18,13 +20,13 @@
         
         <div class="warning-box">
             ⚠️ <strong>SINAV KURALLARI:</strong><br>
-            1. Süre 30 dakikadır.<br>
-            2. Sorular her öğrenciye karışık sırada gelir.<br>
+            1. Süre <strong>30 dakikadır.</strong><br>
+            2. Başlayınca tarayıcı <strong>Tam Ekran</strong> moduna geçer.<br>
             3. Sekme değiştirmek <strong>KOPYA</strong> sayılır ve sınav iptal olur.<br>
-            4. Cevaplarınız otomatik olarak veritabanına işlenir.
+            4. Sorular ve şıklar her öğrenciye farklı sırada gelir.
         </div>
         
-        <button id="startBtn" onclick="startQuiz()" disabled>Sorular Yükleniyor... ⏳</button>
+        <button id="startBtn" onclick="startQuiz()" disabled>Sistem Yükleniyor... ⏳</button>
     </div>
 
     <div class="container hidden" id="quizScreen">
@@ -53,14 +55,27 @@
     </div>
 
     <div class="container hidden" id="resultScreen">
-        <h1>🏁 Sınav Sonlandı</h1>
+        <h1>🏁 Sınav Tamamlandı</h1>
+        
         <div class="score-card">
             <h2 id="resultName"></h2>
-            <p>No: <span id="resultId"></span></p>
+            <p>Öğrenci No: <span id="resultId"></span></p>
             <hr>
             <h3>Puan: <span id="score">0</span> / 100</h3>
-            <p id="feedbackMessage"></p>
+            <p id="feedbackMessage" style="font-weight: bold;"></p>
+            
+            <div id="certificateArea" class="hidden certificate-box">
+                <div class="cert-icon">🏆</div>
+                <h3>BAŞARI BELGESİ</h3>
+                <p>Sayın <strong id="certName">...</strong>,</p>
+                <p>Bu dersin final sınavını başarıyla tamamladınız.</p>
+                <div class="cert-footer">
+                    <small>Tarih: <span id="certDate"></span></small>
+                    <small>İmza: Sistem Onayı ✅</small>
+                </div>
+            </div>
         </div>
+
         <button disabled style="background-color: #ccc; cursor: not-allowed;">Oturum Kapandı</button>
     </div>
 
@@ -84,7 +99,7 @@
         <button onclick="closeAdmin()" style="background-color: #636e72; margin-top:20px;">Çıkış</button>
     </div>
 
-    <footer style="margin-top: 50px; color: #ccc; font-size: 0.8rem;">
+    <footer style="margin-top: 50px; color: #bdc3c7; font-size: 0.8rem;">
         <span style="cursor: pointer;" onclick="toggleAdmin()">🔒 Yönetici Girişi</span>
     </footer>
 

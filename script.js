@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------
-// ⚠️ YENİ DAĞITIMDAN ALDIĞIN LİNKİ BURAYA YAPIŞTIR
+// ⚠️ ÇALIŞAN GOOGLE APPS SCRIPT LINKINI BURAYA YAPIŞTIR
 // ------------------------------------------------------------------
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz8zA3_k3jX5uyHKt2l3sNgA2j4pPHYox5QB2QyYMwzi6mGcK551HBgW8BOBvymow9_/exec'; 
 
@@ -23,24 +23,21 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if(data.error) {
-                console.error("Hata:", data.error);
-                startBtn.innerText = "Veritabanı Hatası!";
+                startBtn.innerText = "Sistem Hatası!";
                 return;
             }
-            // Gelen soruları kaydet
             questionsSource = data;
             
             if(questionsSource.length === 0) {
-                startBtn.innerText = "Soru Bulunamadı! (Admin Panelinden Yükleyiniz)";
+                startBtn.innerText = "Soru Bekleniyor (Admin)...";
             } else {
-                console.log("Sorular yüklendi:", questionsSource.length, "adet");
                 startBtn.innerText = "Sınavı Başlat";
                 startBtn.disabled = false;
             }
         })
         .catch(error => {
-            console.error('Bağlantı Hatası:', error);
-            startBtn.innerText = "Bağlantı Hatası! Sayfayı Yenile.";
+            console.error('Hata:', error);
+            startBtn.innerText = "Bağlantı Yok! Yenile.";
         });
 });
 
@@ -52,11 +49,14 @@ function startQuiz() {
     if (nameInput === "") { alert("İsim alanı boş bırakılamaz!"); return; }
     if (idInput.length !== 9) { alert("Öğrenci numarası 9 haneli olmalıdır!"); return; }
 
+    // ⭐ YENİ: TAM EKRAN MODU ⭐
+    openFullscreen();
+
     studentName = nameInput;
     studentNumber = idInput;
     isExamActive = true; 
 
-    // A) SORULARI KARIŞTIR VE GÜVENLİ HALE GETİR
+    // Soruları Karıştır ve Cevapları Gizle
     let shuffled = [...questionsSource].sort(() => Math.random() - 0.5);
     
     activeQuestions = shuffled.map(q => {
@@ -64,19 +64,35 @@ function startQuiz() {
             question: q.question,
             options: q.options,
             hint: q.hint,
-            _secureAnswer: q.answer // Cevabı gizle
+            _secureAnswer: q.answer
         };
     });
 
-    // EKRANLARI DEĞİŞTİR
+    // Ekranları Değiştir
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
-    document.getElementById('displayName').innerText = "Öğrenci: " + studentName;
+    document.getElementById('displayName').innerText = studentName;
 
     userAnswers = new Array(activeQuestions.length).fill(null);
     showQuestion(0);
     startExamTimer();
     document.addEventListener("visibilitychange", handleVisibilityChange);
+}
+
+// --- YARDIMCI: TAM EKRAN FONKSİYONU ---
+function openFullscreen() {
+    const elem = document.documentElement;
+    try {
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+        }
+    } catch(err) {
+        console.log("Tam ekran engellendi (Tarayıcı izni yok)");
+    }
 }
 
 // --- 2. SORU GÖSTERİMİ ---
@@ -102,7 +118,7 @@ function showQuestion(index) {
 
     const btn = document.getElementById('nextBtn');
     if (index === activeQuestions.length - 1) {
-        btn.innerText = "Sınavı Tamamla ✅";
+        btn.innerText = "Sınavı Bitir ✅";
         btn.setAttribute("onclick", "finishQuiz('NORMAL')");
     } else {
         btn.innerText = "Sonraki Soru ➡️";
@@ -121,7 +137,7 @@ function nextQuestion() {
     showQuestion(currentQuestionIndex);
 }
 
-// --- 3. AJAN VE SAYAÇLAR ---
+// --- 3. AJAN VE ZAMANLAYICILAR ---
 function startHintTimer(qIndex) {
     if (hintTimeout) clearTimeout(hintTimeout);
     hintTimeout = setTimeout(() => {
@@ -162,7 +178,7 @@ function handleVisibilityChange() {
     }
 }
 
-// --- 5. BİTİŞ VE KAYIT ---
+// --- 5. BİTİŞ, PUANLAMA VE SERTİFİKA ---
 function finishQuiz(type) {
     isExamActive = false;
     clearInterval(examTimerInterval);
@@ -181,6 +197,7 @@ function finishQuiz(type) {
     }
     score = Math.round(score);
 
+    // Ekranları Yönet
     document.getElementById('quizScreen').classList.add('hidden');
     document.getElementById('resultScreen').classList.remove('hidden');
     
@@ -191,48 +208,58 @@ function finishQuiz(type) {
     let feedback = document.getElementById('feedbackMessage');
     let statusNote = "Normal";
 
+    // Durum Kontrolü
     if (type === "CHEATING") {
-        feedback.innerText = "⚠️ KOPYA GİRİŞİMİ! Puanınız 0.";
+        feedback.innerText = "⚠️ KOPYA GİRİŞİMİ! Sınav iptal edildi.";
         feedback.style.color = "red";
         statusNote = "KOPYA_GIRISIMI";
-    } else if (type === "TIMEOUT") {
-        feedback.innerText = "⏰ Süre doldu.";
-        statusNote = "SURE_BITTI";
+    } else if (score >= 50) {
+        // ⭐ GEÇME DURUMU VE SERTİFİKA ⭐
+        feedback.innerText = "Tebrikler! Dersi başarıyla geçtiniz. 🎉";
+        feedback.style.color = "green";
+        
+        // Sertifikayı Göster
+        document.getElementById('certificateArea').classList.remove('hidden');
+        document.getElementById('certName').innerText = studentName;
+        document.getElementById('certDate').innerText = new Date().toLocaleDateString();
     } else {
-        feedback.innerText = "Sonuç veritabanına işleniyor... 🔄";
-        feedback.style.color = "#2c3e50";
+        // KALMA DURUMU
+        feedback.innerText = "Maalesef kaldınız. Daha çok çalışmalısınız.";
+        feedback.style.color = "orange";
+        if(type === "TIMEOUT") {
+             feedback.innerText += " (Süre Doldu)";
+             statusNote = "SURE_BITTI";
+        }
     }
 
-    // VERİ PAKETİ
+    // Veriyi Google'a Gönder
     const data = {
-        type: "RESULT", // Sunucu bunun öğrenci sonucu olduğunu anlasın
+        type: "RESULT", 
         Isim: studentName,
         Numara: studentNumber,
         Puan: score,
         Durum: statusNote
     };
-
     sendToGoogleSheets(data, feedback);
 }
 
-// --- GOOGLE FETCHER (Ortak Fonksiyon) ---
 function sendToGoogleSheets(data, feedbackElement) {
+    feedbackElement.innerText += " (Veritabanına işleniyor...)";
+    
     fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         mode: "no-cors", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
     }).then(() => {
-        if(feedbackElement) {
-            feedbackElement.innerText += " ✅ KAYDEDİLDİ";
-            if(data.Durum !== "KOPYA_GIRISIMI") feedbackElement.style.color = "green";
-        }
+        let currentText = feedbackElement.innerText.replace(" (Veritabanına işleniyor...)", "");
+        feedbackElement.innerText = currentText + " ✅ KAYDEDİLDİ";
     }).catch(e => {
-        if(feedbackElement) feedbackElement.innerText += " ⚠️ Hata (Yerel)";
+        feedbackElement.innerText += " ⚠️ Bağlantı Hatası (Yerel Kayıt)";
     });
 }
 
-// --- 6. ADMİN PANELİ İŞLEMLERİ ---
+// --- 6. ADMİN PANELİ ---
 function toggleAdmin() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('adminPanel').classList.remove('hidden');
@@ -245,7 +272,7 @@ function closeAdmin() {
 
 function adminLogin() {
     const pass = document.getElementById('adminPass').value;
-    if (pass === "1234") { // Şifreyi buradan değiştirebilirsin
+    if (pass === "1234") { 
         document.getElementById('adminLogin').classList.add('hidden');
         document.getElementById('adminControls').classList.remove('hidden');
     } else {
@@ -256,10 +283,8 @@ function adminLogin() {
 function deleteQuestions() {
     if(!confirm("Emin misiniz? Tüm sorular silinecek!")) return;
     updateStatus("Siliniyor...");
-    
     fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
+        method: "POST", mode: "no-cors",
         body: JSON.stringify({ type: "DELETE_ALL" })
     }).then(() => {
         updateStatus("✅ Tüm sorular silindi!");
@@ -272,19 +297,16 @@ function uploadQuestions() {
     try {
         const questionsData = JSON.parse(jsonText);
         updateStatus("Yükleniyor...");
-        
         fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
+            method: "POST", mode: "no-cors",
             body: JSON.stringify({ type: "ADD_BULK", questions: questionsData })
         }).then(() => {
             updateStatus("✅ Yüklendi! Sayfayı yenileyip test et.");
             document.getElementById('jsonInput').value = "";
             alert("Sorular başarıyla yüklendi!");
         });
-
     } catch (e) {
-        alert("Geçersiz JSON formatı! Kodu kontrol et.");
+        alert("Geçersiz JSON formatı!");
     }
 }
 

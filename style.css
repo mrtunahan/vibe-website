@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #eef2f3;
+    background-color: #f4f7f6;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -12,8 +12,8 @@ body {
 .container {
     background: white;
     padding: 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
     width: 90%;
     max-width: 600px;
     text-align: center;
@@ -23,7 +23,22 @@ body {
 
 .hidden { display: none !important; }
 
-h1 { color: #2c3e50; margin-bottom: 10px; }
+/* --- YENİ: LOGO STİLİ --- */
+.uni-logo {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    margin-bottom: 10px;
+    animation: float 3s ease-in-out infinite; /* Süzülme efekti */
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+h1 { color: #2c3e50; margin-bottom: 10px; margin-top: 0; }
 h2 { color: #d35400; }
 
 input {
@@ -49,9 +64,10 @@ button {
     margin-top: 15px;
     width: 100%;
     font-weight: bold;
-    transition: background 0.3s;
+    transition: background 0.3s, transform 0.1s;
 }
 button:hover { background-color: #74b9ff; }
+button:active { transform: scale(0.98); }
 button:disabled { background-color: #b2bec3; cursor: not-allowed; }
 
 .warning-box {
@@ -104,7 +120,30 @@ button:disabled { background-color: #b2bec3; cursor: not-allowed; }
 }
 .agent-avatar { font-size: 2rem; }
 
+/* --- YENİ: SERTİFİKA STİLİ --- */
+.certificate-box {
+    margin-top: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, #fffdf0 0%, #fff 100%);
+    border: 4px double #f1c40f; /* Altın çerçeve */
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(241, 196, 15, 0.2);
+    animation: popIn 1s ease;
+}
+.cert-icon { font-size: 3rem; margin-bottom: 10px; }
+.certificate-box h3 { color: #d35400; letter-spacing: 2px; margin: 5px 0; }
+.certificate-box p { color: #2c3e50; margin: 5px 0; }
+.cert-footer {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #f1c40f;
+    display: flex;
+    justify-content: space-between;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+}
+
 @keyframes popIn {
-    from { opacity: 0; transform: scale(0.9); }
+    from { opacity: 0; transform: scale(0.8); }
     to { opacity: 1; transform: scale(1); }
 }
