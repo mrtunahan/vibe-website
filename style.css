@@ -1,92 +1,71 @@
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
+/* ... (Eski CSS kodlarının hepsi kalsın, altına bunları ekle) ... */
 
-.container {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    width: 90%;
-    max-width: 600px;
-    text-align: center;
+/* İLERLEME ÇUBUĞU */
+.progress-container {
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
     margin-bottom: 20px;
+    height: 10px;
+    overflow: hidden;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #2ecc71;
+    transition: width 0.3s ease;
 }
 
+/* SORU RESMİ */
+.q-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* İTİRAZ BUTONU */
+.objection-btn {
+    background-color: transparent;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    font-size: 0.8rem;
+    width: auto;
+    padding: 8px 15px;
+    margin-top: 0; /* Controls flex olduğu için sıfırladık */
+}
+.objection-btn:hover {
+    background-color: #fadbd8;
+}
+.objection-btn.active {
+    background-color: #e74c3c;
+    color: white;
+    font-weight: bold;
+}
+
+/* ... (Diğer stil kodları aynı: .analysis-box, .review-item vs.) ... */
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+.container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 600px; text-align: center; margin-bottom: 20px; }
 .hidden { display: none !important; }
-
-/* Logo */
-.uni-logo {
-    width: 90px; height: 90px; object-fit: contain;
-    margin-bottom: 10px; animation: float 3s ease-in-out infinite;
-}
-@keyframes float { 0% {transform: translateY(0px);} 50% {transform: translateY(-8px);} 100% {transform: translateY(0px);} }
-
-input {
-    width: 100%; padding: 12px; margin: 10px 0;
-    border: 2px solid #dfe6e9; border-radius: 8px; box-sizing: border-box;
-}
-
-button {
-    background-color: #0984e3; color: white; border: none;
-    padding: 14px; border-radius: 8px; cursor: pointer;
-    width: 100%; font-weight: bold; margin-top: 10px;
-}
-button:hover { background-color: #74b9ff; }
-button:disabled { background-color: #b2bec3; cursor: not-allowed; }
-
-.warning-box {
-    background-color: #fff3cd; color: #856404; padding: 12px;
-    border-radius: 8px; font-size: 0.9rem; text-align: left;
-    border-left: 4px solid #ffc107; margin: 15px 0;
-}
-
-.options-grid label {
-    display: flex; align-items: center; background: #f1f2f6;
-    padding: 12px; margin: 8px 0; border-radius: 8px;
-    cursor: pointer; text-align: left; transition: 0.2s;
-}
-.options-grid label:hover { background: #dcdde1; }
-.options-grid input { width: auto; margin-right: 10px; }
-
-.agent-box {
-    margin-top: 20px; background-color: #d1ecf1; color: #0c5460;
-    padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px;
-}
+.uni-logo { width: 90px; height: 90px; object-fit: contain; margin-bottom: 10px; animation: float 3s infinite; }
+@keyframes float { 0%, 100% {transform: translateY(0);} 50% {transform: translateY(-8px);} }
+input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #dfe6e9; border-radius: 8px; box-sizing: border-box; }
+button { background: #0984e3; color: white; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+button:hover { background: #74b9ff; } button:disabled { background: #b2bec3; cursor: not-allowed; }
+.warning-box { background: #fff3cd; color: #856404; padding: 12px; border-radius: 8px; text-align: left; border-left: 4px solid #ffc107; margin: 15px 0; }
+.options-grid label { display: flex; align-items: center; background: #f1f2f6; padding: 12px; margin: 8px 0; border-radius: 8px; cursor: pointer; text-align: left; }
+.options-grid label:hover { background: #dcdde1; } .options-grid input { margin-right: 10px; }
+.agent-box { margin-top: 20px; background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
 .agent-avatar { font-size: 1.5rem; }
-
-/* Sertifika */
-.certificate-box {
-    margin-top: 20px; padding: 15px;
-    background: linear-gradient(135deg, #fffdf0 0%, #fff 100%);
-    border: 4px double #f1c40f; border-radius: 10px;
-}
-.cert-icon { font-size: 2.5rem; }
-.cert-footer { border-top: 1px solid #f1c40f; margin-top: 10px; padding-top: 5px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #7f8c8d; }
-
-/* Analiz Kutusu */
-.analysis-box {
-    background-color: #e3f2fd; border-left: 5px solid #2196f3;
-    padding: 15px; margin: 20px 0; text-align: left; border-radius: 5px;
-}
-.analysis-box h3 { color: #1565c0; margin-top: 0; font-size: 1rem; }
-.analysis-box p { margin: 0; font-size: 0.9rem; line-height: 1.4; }
-
-/* İnceleme Listesi */
-.review-item {
-    background: #fff; border: 1px solid #ddd;
-    padding: 10px; margin-bottom: 10px; border-radius: 8px;
-}
-.review-item.correct { border-left: 5px solid #2ecc71; }
-.review-item.wrong { border-left: 5px solid #e74c3c; }
+.certificate-box { margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #fffdf0 0%, #fff 100%); border: 4px double #f1c40f; border-radius: 10px; }
+.cert-icon { font-size: 2.5rem; } .cert-footer { border-top: 1px solid #f1c40f; margin-top: 10px; padding-top: 5px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #7f8c8d; }
+.analysis-box { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 15px; margin: 20px 0; text-align: left; border-radius: 5px; }
+.analysis-box h3 { color: #1565c0; margin: 0; font-size: 1rem; }
+.review-item { background: #fff; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 8px; }
+.review-item.correct { border-left: 5px solid #2ecc71; } .review-item.wrong { border-left: 5px solid #e74c3c; }
 .review-opt { display: block; padding: 4px 8px; margin: 2px 0; border-radius: 4px; font-size: 0.9rem; }
-.opt-correct { background: #d5f5e3; color: #1d8348; font-weight: bold; }
-.opt-wrong { background: #fadbd8; color: #943126; text-decoration: line-through; }
-.opt-topic { float: right; font-size: 0.7rem; background: #eee; padding: 2px 5px; border-radius: 3px; }
+.opt-correct { background: #d5f5e3; color: #1d8348; font-weight: bold; } .opt-wrong { background: #fadbd8; color: #943126; text-decoration: line-through; } .opt-topic { float: right; font-size: 0.7rem; background: #eee; padding: 2px 5px; border-radius: 3px; }
