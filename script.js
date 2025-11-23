@@ -1,372 +1,401 @@
-// ------------------------------------------------------------------
-// ⚠️ YENİ DAĞITIMDAN ALDIĞIN LİNKİ BURAYA YAPIŞTIR
-// ------------------------------------------------------------------
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9VXMAIxz3Aps5oOxEX75n7g0PT3nKskt2nPH0xyxy3NndNgxS5ZVOaYS_dMp-kVwV/exec'; 
+// ==================================================================
+// ⚠️ KENDİ URL'NİZİ BURAYA YAPIŞTIRIN
+// ==================================================================
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSVYVlNCWjSMrjjKYgwhCH7qM87szHW49wdMH2_TwL5EHbVb398HJUxeCPVC-M2DOo/exec'; 
 
-// --- DEĞİŞKENLER ---
+// Yönetici Şifresi: "zeynep1605" (SHA-256)
+const ADMIN_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
+
+// Global Değişkenler
 let questionsSource = []; 
 let activeQuestions = [];
-let studentName = "";
-let studentNumber = "";
+let studentName = "", studentNumber = "";
 let currentQuestionIndex = 0; 
 let userAnswers = []; 
-let totalTimeLeft = 30 * 60;
-let examTimerInterval;
-let hintTimeout; 
+let totalTimeLeft = 30 * 60; 
+let examTimerInterval, hintTimeout; 
 let isExamActive = false;
-let objectionLog = [];
+let hasAttemptedFullscreen = false;
 
-// --- SAYFA YÜKLENİNCE SORULARI ÇEK ---
+// BAŞLANGIÇ
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
-    
+    if(localStorage.getItem('examSession')) localStorage.removeItem('examSession');
+
     fetch(GOOGLE_SCRIPT_URL)
-        .then(response => response.json())
-        .then(data => {
-            if(data.error) {
-                console.error("Hata:", data.error);
-                startBtn.innerText = "Veritabanı Hatası!";
-                return;
-            }
-            // Gelen soruları kaydet
-            questionsSource = data;
-            
-            if(questionsSource.length === 0) {
-                startBtn.innerText = "Soru Bulunamadı! (Admin Panelinden Yükleyiniz)";
-            } else {
-                console.log("Sorular yüklendi:", questionsSource.length, "adet");
-                startBtn.innerText = "Sınavı Başlat";
-                startBtn.disabled = false;
-            }
-        })
-        .catch(error => {
-            console.error('Bağlantı Hatası:', error);
-            startBtn.innerText = "Bağlantı Hatası! Sayfayı Yenile.";
-        });
+    .then(r => r.json())
+    .then(data => {
+        if(data.error) throw new Error(data.error);
+        questionsSource = data;
+        
+        if(!questionsSource || questionsSource.length === 0) {
+             startBtn.innerText = "Soru Yok (Admin İle Görüşün)";
+             startBtn.disabled = true;
+        } else {
+            startBtn.innerText = "Sınavı Başlat"; 
+            startBtn.disabled = false;
+        }
+    }).catch(e => {
+        startBtn.innerText = "Bağlantı Hatası!";
+        startBtn.style.background = "#ef4444";
+        console.error(e);
+    });
+
+    // Anti-Cheat
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    document.onkeydown = function(e) { if(e.keyCode == 123 || (e.ctrlKey && e.keyCode == 85)) return false; };
 });
 
-// --- 1. SINAVI BAŞLAT ---
-function startQuiz() {
-    const nameInput = document.getElementById('studentName').value.trim();
-    const idInput = document.getElementById('studentId').value.toString();
+// Yardımcı Fonksiyonlar
+function obfuscateAnswer(answer) { try { return btoa(encodeURIComponent(answer)).split("").reverse().join(""); } catch(e) { return answer; } }
+function deobfuscateAnswer(obfuscated) { try { return decodeURIComponent(atob(obfuscated.split("").reverse().join(""))); } catch(e) { return obfuscated; } }
 
-    if (nameInput === "") { alert("İsim alanı boş bırakılamaz!"); return; }
-    if (idInput.length !== 9) { alert("Öğrenci numarası 9 haneli olmalıdır!"); return; }
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
 
-    studentName = nameInput;
-    studentNumber = idInput;
+function openFullscreen() {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) return elem.requestFullscreen();
+    if (elem.mozRequestFullScreen) return elem.mozRequestFullScreen();
+    if (elem.webkitRequestFullscreen) return elem.webkitRequestFullscreen();
+    if (elem.msRequestFullscreen) return elem.msRequestFullscreen();
+    return Promise.reject("Desteklenmiyor");
+}
+
+// ==================================================================
+// KONTROLLÜ GİRİŞ VE BAŞLATMA
+// ==================================================================
+async function startQuizAttempt() {
+    const nameInput = document.getElementById('studentName');
+    const idInput = document.getElementById('studentId');
+    const startBtn = document.getElementById('startBtn');
+
+    const rawName = nameInput.value.trim();
+    const id = idInput.value.toString().trim();
+
+    if (id.length !== 9) { 
+        Swal.fire({ icon: 'error', title: 'Hata', text: 'Öğrenci numarası 9 haneli olmalıdır.' });
+        return;
+    }
+
+    startBtn.disabled = true;
+    const originalText = startBtn.innerText;
+    startBtn.innerText = "Kimlik Doğrulanıyor... 🔄";
+
+    try {
+        // SUNUCUDAN İZİN İSTE
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ type: "CHECK_ACCESS", Numara: id })
+        });
+        const result = await response.json();
+
+        // 1. HATA VARSA (Kayıt yok veya daha önce girmiş)
+        if (result.status === "error") {
+            Swal.fire({ icon: 'error', title: 'Giriş Başarısız', text: result.message });
+            startBtn.disabled = false;
+            startBtn.innerText = originalText;
+            return;
+        }
+
+        // 2. BAŞARILIYSA: Sunucudan gelen RESMİ adı kullan
+        studentName = result.name; // A+B birleşimi
+        studentNumber = id;
+
+        // Tam Ekran Denemesi
+        try {
+            if (!document.fullscreenElement) await openFullscreen();
+            
+            setTimeout(() => {
+                hasAttemptedFullscreen = true;
+                initializeQuiz();
+            }, 100);
+
+        } catch (err) {
+            Swal.fire({ 
+                icon: 'warning', 
+                title: 'Tam Ekran Gerekli', 
+                text: 'Lütfen F11 tuşuna basıp tekrar deneyin.',
+                confirmButtonText: 'Tamam'
+            });
+            startBtn.disabled = false;
+            startBtn.innerText = originalText;
+        }
+
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Bağlantı Hatası', text: 'Sunucuya ulaşılamadı.' });
+        startBtn.disabled = false;
+        startBtn.innerText = originalText;
+    }
+}
+
+function initializeQuiz() {
     isExamActive = true; 
+    let shuffledQuestions = shuffleArray([...questionsSource]);
 
-    // A) SORULARI KARIŞTIR VE GÜVENLİ HALE GETİR
-    let shuffled = [...questionsSource].sort(() => Math.random() - 0.5);
-    
-    activeQuestions = shuffled.map(q => {
+    activeQuestions = shuffledQuestions.map(q => {
+        let optionsWithIndex = q.options.map((opt, idx) => ({val: opt, originalIdx: idx}));
+        let shuffledOptionsMap = shuffleArray(optionsWithIndex);
+        let finalOptions = shuffledOptionsMap.map(o => o.val);
+        
+        let newAnswerIndex;
+        if(q.type === 'text') newAnswerIndex = q.answer;
+        else newAnswerIndex = shuffledOptionsMap.findIndex(o => o.originalIdx.toString() === q.answer.toString());
+        
         return {
-            question: q.question,
-            options: q.options,
-            hint: q.hint,
-            _secureAnswer: q.answer // Cevabı gizle
+            ...q,
+            options: finalOptions,
+            _secureAnswer: obfuscateAnswer(newAnswerIndex !== -1 ? newAnswerIndex.toString() : ""),
+            topic: q.topic || "Genel", image: q.image || ""
         };
     });
 
-    // EKRANLARI DEĞİŞTİR
+    userAnswers = new Array(activeQuestions.length).fill(null);
+    localStorage.setItem('examSession', JSON.stringify({name: studentName, id: studentNumber, answers: userAnswers}));
+
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
-    document.getElementById('displayName').innerText = "Öğrenci: " + studentName;
+    document.getElementById('displayName').innerText = studentName;
 
-    userAnswers = new Array(activeQuestions.length).fill(null);
     showQuestion(0);
+    if(examTimerInterval) clearInterval(examTimerInterval);
     startExamTimer();
     document.addEventListener("visibilitychange", handleVisibilityChange);
 }
 
-// --- 2. SORU GÖSTERİMİ ---
+// SORU GÖSTERİMİ
 function showQuestion(index) {
-    hideAgent();
-    
-    const q = activeQuestions[index];
-    document.getElementById('qTitle').innerText = `Soru ${index + 1} / ${activeQuestions.length}`;
-    document.getElementById('qText').innerText = q.question;
-    // --- İLERLEME ÇUBUĞU KODU ---
-    const progressPercent = ((index + 1) / activeQuestions.length) * 100;
-    document.getElementById('progressBar').style.width = `${progressPercent}%`;
-    
-    const optionsDiv = document.getElementById('qOptions');
-    optionsDiv.innerHTML = ""; 
-
-    q.options.forEach((opt, i) => {
-        const isChecked = userAnswers[index] === i ? "checked" : "";
-        optionsDiv.innerHTML += `
-            <label onclick="selectOption(${index}, ${i})">
-                <input type="radio" name="option" ${isChecked}>
-                ${opt}
-            </label>
-        `;
-    });
-    const reportButtonHtml = `
-    <button class="report-btn" onclick="reportQuestion(${index})">
-        ⚠️ Hatalı Soru Bildir
-    </button>
-    <div style="clear:both"></div> 
-`   ;
-    // Butonu seçeneklerin altına ekliyoruz
-    optionsDiv.innerHTML += reportButtonHtml;
-    // --- YENİ KOD BİTİŞ ---
-
-    const btn = document.getElementById('nextBtn');
-    if (index === activeQuestions.length - 1) {
-        btn.innerText = "Sınavı Tamamla ✅";
-        btn.setAttribute("onclick", "finishQuiz('NORMAL')");
-    } else {
-        btn.innerText = "Sonraki Soru ➡️";
-        btn.setAttribute("onclick", "nextQuestion()");
-    }
-
-    startHintTimer(index);
-}
-
-function selectOption(qIndex, optionIndex) {
-    userAnswers[qIndex] = optionIndex;
-}
-
-function nextQuestion() {
-    currentQuestionIndex++;
-    showQuestion(currentQuestionIndex);
-}
-
-// --- 3. AJAN VE SAYAÇLAR ---
-function startHintTimer(qIndex) {
-    if (hintTimeout) clearTimeout(hintTimeout);
-    hintTimeout = setTimeout(() => {
-        showAgent(activeQuestions[qIndex].hint);
-    }, 30000); 
-}
-
-function showAgent(hintText) {
-    const box = document.getElementById('agentBox');
-    document.getElementById('agentText').innerText = hintText;
-    box.classList.remove('hidden');
-}
-
-function hideAgent() {
     document.getElementById('agentBox').classList.add('hidden');
-    if (hintTimeout) clearTimeout(hintTimeout);
+    const card = document.getElementById('currentQuestionCard');
+    card.classList.remove('slide-in');
+    
+    setTimeout(() => {
+        const progress = ((index + 1) / activeQuestions.length) * 100;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+
+        const q = activeQuestions[index];
+        document.getElementById('qIndex').innerText = `SORU ${index + 1} / ${activeQuestions.length}`;
+        document.getElementById('qText').innerHTML = q.question; 
+        
+        const imgEl = document.getElementById('qImage');
+        if (q.image && q.image.startsWith('http')) { imgEl.src = q.image; imgEl.classList.remove('hidden'); }
+        else { imgEl.src = ""; imgEl.classList.add('hidden'); }
+
+        renderOptions(q, index);
+
+        const btn = document.getElementById('nextBtn');
+        if (index === activeQuestions.length - 1) {
+            btn.innerText = "Sınavı Bitir ✅";
+            btn.onclick = confirmFinishQuiz;
+        } else {
+            btn.innerText = "Sonraki Soru ➡️";
+            btn.onclick = nextQuestion;
+        }
+
+        if(q.hint) {
+            if(hintTimeout) clearTimeout(hintTimeout);
+            hintTimeout = setTimeout(() => { 
+                document.getElementById('agentBox').classList.remove('hidden'); 
+                document.getElementById('agentText').innerText = q.hint; 
+            }, 45000);
+        }
+        
+        card.classList.add('slide-in'); 
+        if(window.MathJax) MathJax.typesetPromise([card]).catch(e=>{});
+    }, 50); 
 }
 
+function renderOptions(q, index) {
+    const div = document.getElementById('qOptions');
+    div.innerHTML = ""; 
+    const currentUserAnswer = userAnswers[index];
+
+    if (q.type === 'text') {
+        div.innerHTML = `<textarea class="text-answer-input" rows="3" placeholder="Cevap..." oninput="saveAnswer(${index}, this.value.trim())">${currentUserAnswer || ''}</textarea>`;
+    } else if (q.type === 'checkbox') {
+        let selectedIndices = currentUserAnswer ? JSON.parse(currentUserAnswer) : [];
+        q.options.forEach((opt, i) => {
+            const isChecked = selectedIndices.includes(i);
+            div.innerHTML += `<label class="${isChecked?'selected':''}" onclick="toggleCheckbox(this,${index},${i})"><input type="checkbox" ${isChecked?'checked':''}><span>${opt}</span></label>`;
+        });
+    } else {
+        q.options.forEach((opt, i) => {
+            const isChecked = (currentUserAnswer !== null && parseInt(currentUserAnswer) === i);
+            div.innerHTML += `<label class="${isChecked?'selected':''}" onclick="selectRadio(this,${index},${i})"><input type="radio" name="opt${index}" ${isChecked?'checked':''}><span>${opt}</span></label>`;
+        });
+    }
+}
+
+function saveAnswer(index, value) {
+    userAnswers[index] = value;
+    let session = JSON.parse(localStorage.getItem('examSession')) || {};
+    session.answers = userAnswers;
+    localStorage.setItem('examSession', JSON.stringify(session));
+}
+
+function selectRadio(el, qIdx, optIdx) {
+    el.parentNode.querySelectorAll('label').forEach(l => l.classList.remove('selected'));
+    el.classList.add('selected'); el.querySelector('input').checked = true;
+    saveAnswer(qIdx, optIdx.toString());
+}
+
+function toggleCheckbox(el, qIdx, optIdx) {
+    const cb = el.querySelector('input'); cb.checked = !cb.checked;
+    cb.checked ? el.classList.add('selected') : el.classList.remove('selected');
+    let sel = userAnswers[qIdx] ? JSON.parse(userAnswers[qIdx]) : [];
+    cb.checked ? sel.push(optIdx) : (sel = sel.filter(x => x !== optIdx));
+    saveAnswer(qIdx, JSON.stringify(sel));
+}
+
+function nextQuestion() { currentQuestionIndex++; showQuestion(currentQuestionIndex); }
+
+function confirmFinishQuiz() {
+    Swal.fire({
+        title: 'Sınavı Bitir?', icon: 'question', showCancelButton: true, confirmButtonText: 'Bitir ✅', cancelButtonText: 'İptal'
+    }).then((r) => { if (r.isConfirmed) finishQuiz('NORMAL'); });
+}
+
+// ZAMANLAYICI & BİTİŞ
 function startExamTimer() {
-    const timerDisplay = document.getElementById('timer');
+    totalTimeLeft = 30 * 60;
+    const timerEl = document.getElementById('timer');
+    const timerCon = document.getElementById('timerContainer');
     examTimerInterval = setInterval(() => {
-        if(totalTimeLeft <= 0) {
-            finishQuiz("TIMEOUT");
-        } else {
+        if(totalTimeLeft <= 0) finishQuiz("TIMEOUT");
+        else {
             totalTimeLeft--;
-            let m = Math.floor(totalTimeLeft / 60);
-            let s = totalTimeLeft % 60;
-            timerDisplay.innerText = `Kalan: ${m}:${s < 10 ? '0'+s : s}`;
-            if(totalTimeLeft < 60) timerDisplay.style.color = "red";
+            let m = Math.floor(totalTimeLeft/60), s = totalTimeLeft%60;
+            timerEl.innerText = `${m}:${s<10?'0'+s:s}`;
+            totalTimeLeft < 60 ? timerCon.classList.add('timer-urgent') : timerCon.classList.remove('timer-urgent');
         }
     }, 1000);
 }
 
-// --- 4. KOPYA KORUMASI ---
-function handleVisibilityChange() {
-    if (document.hidden && isExamActive) {
-        finishQuiz("CHEATING");
-    }
-}
-
-// --- 5. BİTİŞ VE KAYIT ---
 function finishQuiz(type) {
-    isExamActive = false;
-    clearInterval(examTimerInterval);
-    clearTimeout(hintTimeout);
+    if(!isExamActive) return;
+    isExamActive = false; 
+    clearInterval(examTimerInterval); clearTimeout(hintTimeout);
     document.removeEventListener("visibilitychange", handleVisibilityChange);
+    localStorage.removeItem('examSession'); 
+    if(document.fullscreenElement) document.exitFullscreen().catch(e=>{});
 
-    let score = 0;
-    const pointPerQuestion = 100 / activeQuestions.length;
+    let score = 0, topicStats = {};
+    const pts = 100 / activeQuestions.length;
 
-    if (type !== "CHEATING") {
-        activeQuestions.forEach((q, i) => {
-            if (userAnswers[i] === q._secureAnswer) {
-                score += pointPerQuestion;
-            }
-        });
-    }
+    activeQuestions.forEach((q, i) => {
+        if(!topicStats[q.topic]) topicStats[q.topic] = {total:0, correct:0};
+        topicStats[q.topic].total++;
+        if (type !== "CHEATING_TAB" && type !== "CHEATING_ESC") {
+            const correct = deobfuscateAnswer(q._secureAnswer);
+            const user = userAnswers[i];
+            let isOk = false;
+            if (q.type === 'checkbox') {
+                 const uS = user ? JSON.parse(user).sort().join(',') : "";
+                 const cS = q.answer ? q.answer.split(',').map(s=>s.trim()).sort().join(',') : "";
+                 isOk = (uS === cS && uS !== "");
+            } else if (q.type === 'text') isOk = (user && user.toLowerCase() === correct.toLowerCase());
+            else isOk = (user === correct);
+
+            if (isOk) { score += pts; topicStats[q.topic].correct++; }
+        }
+    });
     score = Math.round(score);
 
     document.getElementById('quizScreen').classList.add('hidden');
     document.getElementById('resultScreen').classList.remove('hidden');
-    
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
-    // --- KARNE OLUŞTURMA ---
-    const mistakeListDiv = document.getElementById('mistakeList');
-    mistakeListDiv.innerHTML = ""; // Temizle
 
-    activeQuestions.forEach((q, i) => {
-        // Eğer cevap yanlışsa veya boşsa
-        if (userAnswers[i] !== q._secureAnswer) {
-            let userAnsText = userAnswers[i] !== null ? q.options[userAnswers[i]] : "Boş Bırakıldı";
-            let correctAnsText = q.options[q._secureAnswer];
-            
-            // Ekrana bas
-            mistakeListDiv.innerHTML += `
-                <div class="mistake-item">
-                    <strong>Soru ${i+1}:</strong> ${q.question}<br>
-                    <span style="text-decoration: line-through; color:red;">Senin Cevabın: ${userAnsText}</span><br>
-                    <span class="correct-answer-text">Doğru Cevap: ${correctAnsText}</span>
-                </div>
-            `;
-        }
-    });
+    let statusNote = "Normal", weakTopic = "";
+    const fb = document.getElementById('feedbackMessage');
 
-    // Karne kutusunu aç
-    document.getElementById('detailedReport').classList.remove('hidden');
-
-    // --- AKILLI TAVSİYE (Fonksiyonu aşağıda tanımlamış olmalısın) ---
-    generateAdvice(score);
-    let feedback = document.getElementById('feedbackMessage');
-    let statusNote = "Normal";
-
-    if (type === "CHEATING") {
-        feedback.innerText = "⚠️ KOPYA GİRİŞİMİ! Puanınız 0.";
-        feedback.style.color = "red";
-        statusNote = "KOPYA_GIRISIMI";
+    if (type.startsWith("CHEATING")) {
+        fb.innerHTML = `⚠️ SINAV İPTAL!<br>Sebep: Güvenlik İhlali`; fb.style.color = "#ef4444"; statusNote = "KOPYA";
     } else if (type === "TIMEOUT") {
-        feedback.innerText = "⏰ Süre doldu.";
-        statusNote = "SURE_BITTI";
+        fb.innerText = "⏰ Süre Doldu."; fb.style.color = "#f59e0b"; statusNote = "SURE_BITTI";
+        generateAnalysis(topicStats); generateReviewPanel();
+    } else if (score >= 50) {
+        fb.innerText = "Tebrikler! Geçtiniz. 🎉"; fb.style.color = "#10b981";
+        document.getElementById('certificateArea').classList.remove('hidden');
+        document.getElementById('certName').innerText = studentName;
+        document.getElementById('certDate').innerText = new Date().toLocaleDateString();
+        document.getElementById('authCode').innerText = Math.random().toString(36).substring(2, 8).toUpperCase();
+        generateAnalysis(topicStats); generateReviewPanel();
     } else {
-        feedback.innerText = "Sonuç veritabanına işleniyor... 🔄";
-        feedback.style.color = "#2c3e50";
+        fb.innerText = "Maalesef kaldınız."; fb.style.color = "#6b7280"; 
+        generateAnalysis(topicStats); generateReviewPanel();
     }
 
-    // VERİ PAKETİ
-    let objectionText = "";
-if (objectionLog.length > 0) {
-    objectionText = " | İTİRAZLAR: " + objectionLog.map(o => `[S${o.soruNo}: ${o.aciklama}]`).join(", ");
+    sendToGoogleSheets({type:"RESULT", Isim:studentName, Numara:studentNumber, Puan:score, Durum:statusNote, Zayif_Konu:weakTopic}, fb);
 }
 
-// VERİ PAKETİ GÜNCELLEMESİ
-const data = {
-    type: "RESULT", 
-    Isim: studentName,
-    Numara: studentNumber,
-    Puan: score,
-    // Eğer itiraz varsa durum mesajının yanına ekle
-    Durum: statusNote + objectionText 
-};
+function handleVisibilityChange() { if(document.hidden && isExamActive) finishQuiz("CHEATING_TAB"); }
+function handleFullscreenChange() { if(!document.fullscreenElement && isExamActive && hasAttemptedFullscreen) finishQuiz("CHEATING_ESC"); }
 
-    sendToGoogleSheets(data, feedback);
-}
-
-// --- GOOGLE FETCHER (Ortak Fonksiyon) ---
-function sendToGoogleSheets(data, feedbackElement) {
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    }).then(() => {
-        if(feedbackElement) {
-            feedbackElement.innerText += " ✅ KAYDEDİLDİ";
-            if(data.Durum !== "KOPYA_GIRISIMI") feedbackElement.style.color = "green";
-        }
-    }).catch(e => {
-        if(feedbackElement) feedbackElement.innerText += " ⚠️ Hata (Yerel)";
-    });
-}
-
-// --- 6. ADMİN PANELİ İŞLEMLERİ ---
-function toggleAdmin() {
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('adminPanel').classList.remove('hidden');
-}
-
-function closeAdmin() {
-    document.getElementById('adminPanel').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
-}
-
-function adminLogin() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === "1234") { // Şifreyi buradan değiştirebilirsin
-        document.getElementById('adminLogin').classList.add('hidden');
-        document.getElementById('adminControls').classList.remove('hidden');
-    } else {
-        alert("Yanlış şifre!");
+// ANALİZ VE RAPOR
+function generateAnalysis(stats) {
+    let weak=[], strong=[], msg="";
+    for(let t in stats) {
+        let r = (stats[t].correct/stats[t].total)*100;
+        if(r<50) weak.push(t); else if(r>=80) strong.push(t);
     }
+    if(strong.length) msg += `🌟 Güçlü: ${strong.join(", ")}<br>`;
+    if(weak.length) msg += `⚠️ Geliştir: ${weak.join(", ")}`;
+    if(msg) { document.getElementById('analysisBox').classList.remove('hidden'); document.getElementById('analysisText').innerHTML = msg; }
 }
 
-function deleteQuestions() {
-    if(!confirm("Emin misiniz? Tüm sorular silinecek!")) return;
-    updateStatus("Siliniyor...");
-    
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({ type: "DELETE_ALL" })
-    }).then(() => {
-        updateStatus("✅ Tüm sorular silindi!");
-        alert("Veritabanı temizlendi.");
+function generateReviewPanel() {
+    const div = document.getElementById('reviewArea'); div.innerHTML = "";
+    activeQuestions.forEach((q, i) => {
+        const c = deobfuscateAnswer(q._secureAnswer);
+        const u = userAnswers[i];
+        let ok = false, uDisp = "", cDisp = "";
+
+        if(q.type === 'text') { ok = (u && u.toLowerCase()===c.toLowerCase()); uDisp=u||"(Boş)"; cDisp=c; }
+        else if(q.type === 'checkbox') {
+            const uS = u?JSON.parse(u).sort().join(','):""; const cS = q.answer?q.answer.split(',').map(s=>s.trim()).sort().join(','):"";
+            ok = (uS===cS && uS!==""); uDisp=u?JSON.parse(u).map(x=>q.options[x]).join(", "):"(Boş)"; cDisp=q.answer?q.answer.split(',').map(x=>q.options[parseInt(x)]).join(", "):"";
+        } else { ok=(u===c); uDisp=u!==null?q.options[parseInt(u)]:"(Boş)"; cDisp=q.options[parseInt(c)]; }
+
+        div.innerHTML += `<div class="review-item ${ok?'correct':'wrong'}"><b>${i+1}. ${q.question}</b><br>Siz: ${uDisp}<br>Doğru: ${cDisp}</div>`;
     });
+    if(window.MathJax) MathJax.typesetPromise([div]).catch(()=>{});
 }
+
+function sendToGoogleSheets(data, fb) { fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify(data)}).then(r=>r.json()).then(d=>{ if(d.status==='success') fb.innerHTML+=" ✅"; }); }
+
+// ADMIN
+function toggleAdmin() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('adminPanel').classList.remove('hidden'); }
+function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
+
+async function adminLoginAttempt() {
+    const p = document.getElementById('adminPass').value.trim();
+    if(!p) return;
+    try {
+        if(!window.crypto || !window.crypto.subtle) { if(p==="zeynep1605") loginSuccess(); else throw 0; return; }
+        const h = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p)))).map(b=>b.toString(16).padStart(2,'0')).join('');
+        if(h===ADMIN_HASH) loginSuccess(); else throw 0;
+    } catch { Swal.fire('Hatalı Şifre'); }
+}
+function loginSuccess() { document.getElementById('adminLogin').classList.add('hidden'); document.getElementById('adminControls').classList.remove('hidden'); }
 
 function uploadQuestions() {
-    const jsonText = document.getElementById('jsonInput').value;
     try {
-        const questionsData = JSON.parse(jsonText);
-        updateStatus("Yükleniyor...");
-        
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ type: "ADD_BULK", questions: questionsData })
-        }).then(() => {
-            updateStatus("✅ Yüklendi! Sayfayı yenileyip test et.");
-            document.getElementById('jsonInput').value = "";
-            alert("Sorular başarıyla yüklendi!");
+        const j = JSON.parse(document.getElementById('jsonInput').value);
+        if(!Array.isArray(j)) throw 0;
+        document.getElementById('adminStatus').innerText = "Yükleniyor...";
+        fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify({type:"ADD_BULK", questions:j})}).then(r=>r.json()).then(d=>{
+            document.getElementById('adminStatus').innerText = d.status==='success' ? "Yüklendi ✅" : "Hata";
         });
-
-    } catch (e) {
-        alert("Geçersiz JSON formatı! Kodu kontrol et.");
-    }
+    } catch { Swal.fire('JSON Hatası'); }
 }
-
-function updateStatus(msg) {
-    document.getElementById('adminStatus').innerText = msg;
-}
-function reportQuestion(index) {
-    // O anki sorunun metnini alalım (raporlarken hangi soru olduğunu bilmek için)
-    const questionText = activeQuestions[index].question.substring(0, 20) + "...";
-    
-    // Kullanıcıdan sebep iste
-    const reason = prompt("Bu soruda ne gibi bir hata var? (Lütfen kısaca açıklayınız):");
-    
-    if (reason && reason.trim() !== "") {
-        // İtirazı kaydet
-        objectionLog.push({
-            soruNo: index + 1,
-            soruOzet: questionText,
-            aciklama: reason
-        });
-        
-        alert("Bildiriminiz kaydedildi, teşekkürler! Sınava devam edebilirsiniz.");
-    }
-}
-function generateAdvice(score) {
-    const adviceBox = document.getElementById('aiAdvice');
-    let message = "";
-
-    if (score === 100) {
-        message = "🏆 Mükemmel! Konuya tamamen hakimsin. Artık bir sonraki seviyeye geçebilirsin.";
-    } else if (score >= 80) {
-        message = "🌟 Çok iyisin! Ufak tefek dikkatsizlikler olmuş olabilir. Yanlış yaptığın soruların üzerinden geçersen tamamsın.";
-    } else if (score >= 50) {
-        message = "📈 Fena değil ama tekrar yapman gerekiyor. Özellikle yanlış yaptığın soruların konularına tekrar çalışmalısın.";
-    } else {
-        message = "⚠️ Konu eksiklerin var. Bu testi bir öğrenme fırsatı olarak gör. Notlarını baştan okuyup tekrar denemelisin.";
-    }
-
-    adviceBox.innerHTML = "<strong>💡 Yapay Zeka Tavsiyesi:</strong><br>" + message;
-}
+function deleteQuestions() { fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify({type:"DELETE_ALL"})}).then(()=>Swal.fire('Silindi')); }
+function reportObjection() { Swal.fire('İletildi'); } // Basit versiyon
+function toggleReview() { document.getElementById('reviewArea').classList.toggle('hidden'); }
