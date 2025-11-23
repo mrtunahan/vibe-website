@@ -28,6 +28,9 @@
     </div>
 
     <div class="container hidden" id="quizScreen">
+        <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+        </div>
         <div class="header-info">
             <span id="displayName">Öğrenci: ...</span>
             <span id="timer">Kalan: 30:00</span>
@@ -60,6 +63,11 @@
             <hr>
             <h3>Puan: <span id="score">0</span> / 100</h3>
             <p id="feedbackMessage"></p>
+        </div>
+        <div id="detailedReport" class="report-box hidden">
+        <h3>🔍 Sınav Analizi</h3>
+        <div id="mistakeList"></div>
+        <div id="aiAdvice" class="advice-box"></div>
         </div>
         <button disabled style="background-color: #ccc; cursor: not-allowed;">Oturum Kapandı</button>
     </div>

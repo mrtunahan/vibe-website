@@ -124,3 +124,50 @@ button:disabled { background-color: #b2bec3; cursor: not-allowed; }
 .report-btn:hover {
     background-color: #d63031; /* Koyu kırmızı */
 }
+.progress-container {
+    width: 100%;
+    background-color: #dfe6e9;
+    height: 8px;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #00b894; /* Canlı Yeşil */
+    transition: width 0.5s ease; /* Akıcı geçiş animasyonu */
+    box-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+}
+.report-box {
+    margin-top: 20px;
+    text-align: left;
+    max-height: 300px;
+    overflow-y: auto; /* Çok yanlış varsa kaydırma çubuğu çıksın */
+    border: 1px solid #dfe6e9;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.mistake-item {
+    background: #fff5f5;
+    border-left: 4px solid #ff7675;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.correct-answer-text {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.advice-box {
+    margin-top: 15px;
+    background-color: #e3f2fd;
+    color: #0984e3;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 500;
+}

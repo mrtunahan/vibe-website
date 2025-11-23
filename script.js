@@ -87,6 +87,9 @@ function showQuestion(index) {
     const q = activeQuestions[index];
     document.getElementById('qTitle').innerText = `Soru ${index + 1} / ${activeQuestions.length}`;
     document.getElementById('qText').innerText = q.question;
+    // --- İLERLEME ÇUBUĞU KODU ---
+    const progressPercent = ((index + 1) / activeQuestions.length) * 100;
+    document.getElementById('progressBar').style.width = `${progressPercent}%`;
     
     const optionsDiv = document.getElementById('qOptions');
     optionsDiv.innerHTML = ""; 
@@ -197,7 +200,32 @@ function finishQuiz(type) {
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
+    // --- KARNE OLUŞTURMA ---
+    const mistakeListDiv = document.getElementById('mistakeList');
+    mistakeListDiv.innerHTML = ""; // Temizle
 
+    activeQuestions.forEach((q, i) => {
+        // Eğer cevap yanlışsa veya boşsa
+        if (userAnswers[i] !== q._secureAnswer) {
+            let userAnsText = userAnswers[i] !== null ? q.options[userAnswers[i]] : "Boş Bırakıldı";
+            let correctAnsText = q.options[q._secureAnswer];
+            
+            // Ekrana bas
+            mistakeListDiv.innerHTML += `
+                <div class="mistake-item">
+                    <strong>Soru ${i+1}:</strong> ${q.question}<br>
+                    <span style="text-decoration: line-through; color:red;">Senin Cevabın: ${userAnsText}</span><br>
+                    <span class="correct-answer-text">Doğru Cevap: ${correctAnsText}</span>
+                </div>
+            `;
+        }
+    });
+
+    // Karne kutusunu aç
+    document.getElementById('detailedReport').classList.remove('hidden');
+
+    // --- AKILLI TAVSİYE (Fonksiyonu aşağıda tanımlamış olmalısın) ---
+    generateAdvice(score);
     let feedback = document.getElementById('feedbackMessage');
     let statusNote = "Normal";
 
@@ -325,4 +353,20 @@ function reportQuestion(index) {
         
         alert("Bildiriminiz kaydedildi, teşekkürler! Sınava devam edebilirsiniz.");
     }
+}
+function generateAdvice(score) {
+    const adviceBox = document.getElementById('aiAdvice');
+    let message = "";
+
+    if (score === 100) {
+        message = "🏆 Mükemmel! Konuya tamamen hakimsin. Artık bir sonraki seviyeye geçebilirsin.";
+    } else if (score >= 80) {
+        message = "🌟 Çok iyisin! Ufak tefek dikkatsizlikler olmuş olabilir. Yanlış yaptığın soruların üzerinden geçersen tamamsın.";
+    } else if (score >= 50) {
+        message = "📈 Fena değil ama tekrar yapman gerekiyor. Özellikle yanlış yaptığın soruların konularına tekrar çalışmalısın.";
+    } else {
+        message = "⚠️ Konu eksiklerin var. Bu testi bir öğrenme fırsatı olarak gör. Notlarını baştan okuyup tekrar denemelisin.";
+    }
+
+    adviceBox.innerHTML = "<strong>💡 Yapay Zeka Tavsiyesi:</strong><br>" + message;
 }
