@@ -14,6 +14,7 @@ let totalTimeLeft = 30 * 60;
 let examTimerInterval;
 let hintTimeout; 
 let isExamActive = false;
+let objectionLog = [];
 
 // --- SAYFA YÜKLENİNCE SORULARI ÇEK ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -99,6 +100,15 @@ function showQuestion(index) {
             </label>
         `;
     });
+    const reportButtonHtml = `
+    <button class="report-btn" onclick="reportQuestion(${index})">
+        ⚠️ Hatalı Soru Bildir
+    </button>
+    <div style="clear:both"></div> 
+`   ;
+    // Butonu seçeneklerin altına ekliyoruz
+    optionsDiv.innerHTML += reportButtonHtml;
+    // --- YENİ KOD BİTİŞ ---
 
     const btn = document.getElementById('nextBtn');
     if (index === activeQuestions.length - 1) {
@@ -204,13 +214,20 @@ function finishQuiz(type) {
     }
 
     // VERİ PAKETİ
-    const data = {
-        type: "RESULT", // Sunucu bunun öğrenci sonucu olduğunu anlasın
-        Isim: studentName,
-        Numara: studentNumber,
-        Puan: score,
-        Durum: statusNote
-    };
+    let objectionText = "";
+if (objectionLog.length > 0) {
+    objectionText = " | İTİRAZLAR: " + objectionLog.map(o => `[S${o.soruNo}: ${o.aciklama}]`).join(", ");
+}
+
+// VERİ PAKETİ GÜNCELLEMESİ
+const data = {
+    type: "RESULT", 
+    Isim: studentName,
+    Numara: studentNumber,
+    Puan: score,
+    // Eğer itiraz varsa durum mesajının yanına ekle
+    Durum: statusNote + objectionText 
+};
 
     sendToGoogleSheets(data, feedback);
 }
@@ -290,4 +307,22 @@ function uploadQuestions() {
 
 function updateStatus(msg) {
     document.getElementById('adminStatus').innerText = msg;
+}
+function reportQuestion(index) {
+    // O anki sorunun metnini alalım (raporlarken hangi soru olduğunu bilmek için)
+    const questionText = activeQuestions[index].question.substring(0, 20) + "...";
+    
+    // Kullanıcıdan sebep iste
+    const reason = prompt("Bu soruda ne gibi bir hata var? (Lütfen kısaca açıklayınız):");
+    
+    if (reason && reason.trim() !== "") {
+        // İtirazı kaydet
+        objectionLog.push({
+            soruNo: index + 1,
+            soruOzet: questionText,
+            aciklama: reason
+        });
+        
+        alert("Bildiriminiz kaydedildi, teşekkürler! Sınava devam edebilirsiniz.");
+    }
 }
