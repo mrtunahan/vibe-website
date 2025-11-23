@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Güvenli Akademik Sınav Sistemi</title>
+    <title>Final Sınav Sistemi</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -16,13 +16,13 @@
         <h1>Final Sınavı Giriş</h1>
         <p>Lütfen kimliğinizi doğrulayınız.</p>
         
-        <input type="text" id="studentName" placeholder="Ad Soyad (Görsel Amaçlı)" autocomplete="off">
+        <input type="text" id="studentName" placeholder="Ad Soyad (Görsel)" autocomplete="off">
         <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" 
                oninput="if(this.value.length > 9) this.value = this.value.slice(0, 9);" autocomplete="off">
         
         <div class="warning-box">
             <strong>⚠️ SINAV KURALLARI:</strong><br>
-            • Numaranız sistemde kayıtlı olmalıdır.<br>
+            • Numaranız "Ogrenciler" listesinde kayıtlı olmalıdır.<br>
             • Sadece <strong>tek giriş</strong> hakkınız vardır.<br>
             • Tam ekran zorunludur. Çıkarsanız sınav <strong>İPTAL</strong> olur.
         </div>
@@ -77,14 +77,14 @@
             <p id="feedbackMessage" style="font-weight: bold; font-size: 1.1rem;"></p>
 
             <div id="analysisBox" class="warning-box hidden" style="background:#eff6ff; border-color:#3b82f6; color:#1e40af;">
-                <strong>📊 Performans Analizi:</strong> <span id="analysisText">...</span>
+                <strong>📊 Analiz Raporu:</strong> <span id="analysisText">...</span>
             </div>
 
             <div id="certificateArea" class="certificate-box hidden">
                 <div style="font-size:3rem; margin-bottom:10px;">🏆</div>
                 <h3 style="color:#d97706; letter-spacing:2px; margin:0;">BAŞARI BELGESİ</h3>
                 <p>Sayın <strong id="certName">...</strong>,</p>
-                <p>Bu dersin final sınavını başarıyla tamamladınız.</p>
+                <p>Bu dersi başarıyla geçtiniz.</p>
                 <div style="margin-top:15px; border-top:1px solid #d4af37; padding-top:5px; font-size:0.8rem; color:#888;">
                     Tarih: <span id="certDate"></span> | Kod: <span id="authCode"></span>
                 </div>
@@ -104,9 +104,9 @@
         </div>
         <div id="adminControls" class="hidden">
             <p style="color:green">Giriş Başarılı.</p>
-            <button onclick="deleteQuestions()" style="background:#ef4444;">🗑️ Veritabanını Temizle</button>
-            <textarea id="jsonInput" placeholder='JSON Soruları Yapıştır...' style="width:100%; height:150px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px; font-family: monospace;"></textarea>
-            <button onclick="uploadQuestions()" style="background:#10b981;">📥 Soruları Yükle</button>
+            <button onclick="deleteQuestions()" style="background:#ef4444;">🗑️ Temizle</button>
+            <textarea id="jsonInput" placeholder='JSON Yapıştır...' style="width:100%; height:150px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px; font-family: monospace;"></textarea>
+            <button onclick="uploadQuestions()" style="background:#10b981;">📥 Yükle</button>
             <p id="adminStatus" style="font-size:0.8rem; color:#666;"></p>
         </div>
         <button onclick="closeAdmin()" style="background:transparent; color:#666; border:1px solid #ccc; margin-top:20px;">Kapat</button>

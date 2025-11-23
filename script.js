@@ -1,10 +1,7 @@
 // ==================================================================
-// ⚠️ KENDİ URL'NİZİ BURAYA YAPIŞTIRIN
+// ⚠️ BURAYA KENDİ DAĞITIM (WEB APP) URL'NİZİ YAPIŞTIRIN
 // ==================================================================
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSVYVlNCWjSMrjjKYgwhCH7qM87szHW49wdMH2_TwL5EHbVb398HJUxeCPVC-M2DOo/exec'; 
-
-// Yönetici Şifresi: "zeynep1605" (SHA-256)
-const ADMIN_HASH = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
 
 // Global Değişkenler
 let questionsSource = []; 
@@ -22,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
     if(localStorage.getItem('examSession')) localStorage.removeItem('examSession');
 
+    // Soruları Çek
     fetch(GOOGLE_SCRIPT_URL)
     .then(r => r.json())
     .then(data => {
@@ -30,14 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if(!questionsSource || questionsSource.length === 0) {
              startBtn.innerText = "Soru Yok (Admin İle Görüşün)";
-             startBtn.disabled = true;
+             startBtn.disabled = false; // Admin girebilsin diye açık bırakıyoruz
         } else {
             startBtn.innerText = "Sınavı Başlat"; 
             startBtn.disabled = false;
         }
     }).catch(e => {
-        startBtn.innerText = "Bağlantı Hatası!";
-        startBtn.style.background = "#ef4444";
+        startBtn.innerText = "Sınavı Başlat (Offline/Hata)";
+        startBtn.disabled = false;
         console.error(e);
     });
 
@@ -47,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.onkeydown = function(e) { if(e.keyCode == 123 || (e.ctrlKey && e.keyCode == 85)) return false; };
 });
 
-// Yardımcı Fonksiyonlar
+// Yardımcılar
 function obfuscateAnswer(answer) { try { return btoa(encodeURIComponent(answer)).split("").reverse().join(""); } catch(e) { return answer; } }
 function deobfuscateAnswer(obfuscated) { try { return decodeURIComponent(atob(obfuscated.split("").reverse().join(""))); } catch(e) { return obfuscated; } }
 
@@ -65,7 +63,7 @@ function openFullscreen() {
     if (elem.mozRequestFullScreen) return elem.mozRequestFullScreen();
     if (elem.webkitRequestFullscreen) return elem.webkitRequestFullscreen();
     if (elem.msRequestFullscreen) return elem.msRequestFullscreen();
-    return Promise.reject("Desteklenmiyor");
+    return Promise.resolve(); // Hata vermesin diye resolve dönüyoruz
 }
 
 // ==================================================================
@@ -76,7 +74,6 @@ async function startQuizAttempt() {
     const idInput = document.getElementById('studentId');
     const startBtn = document.getElementById('startBtn');
 
-    const rawName = nameInput.value.trim();
     const id = idInput.value.toString().trim();
 
     if (id.length !== 9) { 
@@ -86,7 +83,7 @@ async function startQuizAttempt() {
 
     startBtn.disabled = true;
     const originalText = startBtn.innerText;
-    startBtn.innerText = "Kimlik Doğrulanıyor... 🔄";
+    startBtn.innerText = "Kontrol Ediliyor... 🔄";
 
     try {
         // SUNUCUDAN İZİN İSTE
@@ -96,7 +93,7 @@ async function startQuizAttempt() {
         });
         const result = await response.json();
 
-        // 1. HATA VARSA (Kayıt yok veya daha önce girmiş)
+        // 1. HATA VARSA
         if (result.status === "error") {
             Swal.fire({ icon: 'error', title: 'Giriş Başarısız', text: result.message });
             startBtn.disabled = false;
@@ -104,32 +101,20 @@ async function startQuizAttempt() {
             return;
         }
 
-        // 2. BAŞARILIYSA: Sunucudan gelen RESMİ adı kullan
-        studentName = result.name; // A+B birleşimi
+        // 2. BAŞARILIYSA
+        studentName = result.name; 
         studentNumber = id;
 
-        // Tam Ekran Denemesi
-        try {
-            if (!document.fullscreenElement) await openFullscreen();
-            
-            setTimeout(() => {
-                hasAttemptedFullscreen = true;
-                initializeQuiz();
-            }, 100);
+        // Tam Ekran Denemesi (Hata verirse yoksay ve devam et)
+        try { await openFullscreen(); } catch(e) {}
 
-        } catch (err) {
-            Swal.fire({ 
-                icon: 'warning', 
-                title: 'Tam Ekran Gerekli', 
-                text: 'Lütfen F11 tuşuna basıp tekrar deneyin.',
-                confirmButtonText: 'Tamam'
-            });
-            startBtn.disabled = false;
-            startBtn.innerText = originalText;
-        }
+        setTimeout(() => {
+            hasAttemptedFullscreen = true;
+            initializeQuiz();
+        }, 300);
 
     } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Bağlantı Hatası', text: 'Sunucuya ulaşılamadı.' });
+        Swal.fire({ icon: 'error', title: 'Bağlantı Hatası', text: 'Sistem URL hatası veya internet yok.' });
         startBtn.disabled = false;
         startBtn.innerText = originalText;
     }
@@ -137,6 +122,12 @@ async function startQuizAttempt() {
 
 function initializeQuiz() {
     isExamActive = true; 
+    
+    if(!questionsSource || questionsSource.length === 0) {
+        Swal.fire('Soru Yok', 'Sistemde yüklü soru bulunamadı.', 'warning');
+        return;
+    }
+
     let shuffledQuestions = shuffleArray([...questionsSource]);
 
     activeQuestions = shuffledQuestions.map(q => {
@@ -371,20 +362,20 @@ function generateReviewPanel() {
 
 function sendToGoogleSheets(data, fb) { fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify(data)}).then(r=>r.json()).then(d=>{ if(d.status==='success') fb.innerHTML+=" ✅"; }); }
 
-// ADMIN
+// ADMIN (Şifre: zeynep1605)
 function toggleAdmin() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('adminPanel').classList.remove('hidden'); }
 function closeAdmin() { document.getElementById('adminPanel').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); }
 
-async function adminLoginAttempt() {
+function adminLoginAttempt() {
     const p = document.getElementById('adminPass').value.trim();
-    if(!p) return;
-    try {
-        if(!window.crypto || !window.crypto.subtle) { if(p==="zeynep1605") loginSuccess(); else throw 0; return; }
-        const h = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(p)))).map(b=>b.toString(16).padStart(2,'0')).join('');
-        if(h===ADMIN_HASH) loginSuccess(); else throw 0;
-    } catch { Swal.fire('Hatalı Şifre'); }
+    if(p === "zeynep1605") {
+        document.getElementById('adminLogin').classList.add('hidden');
+        document.getElementById('adminControls').classList.remove('hidden');
+        Swal.fire({toast:true, icon:'success', title:'Hoş geldin Yönetici', timer:1500, showConfirmButton:false});
+    } else {
+        Swal.fire('Hatalı Şifre');
+    }
 }
-function loginSuccess() { document.getElementById('adminLogin').classList.add('hidden'); document.getElementById('adminControls').classList.remove('hidden'); }
 
 function uploadQuestions() {
     try {
@@ -394,8 +385,8 @@ function uploadQuestions() {
         fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify({type:"ADD_BULK", questions:j})}).then(r=>r.json()).then(d=>{
             document.getElementById('adminStatus').innerText = d.status==='success' ? "Yüklendi ✅" : "Hata";
         });
-    } catch { Swal.fire('JSON Hatası'); }
+    } catch { Swal.fire('JSON Hatası (Formatı Kontrol Edin)'); }
 }
-function deleteQuestions() { fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify({type:"DELETE_ALL"})}).then(()=>Swal.fire('Silindi')); }
-function reportObjection() { Swal.fire('İletildi'); } // Basit versiyon
+function deleteQuestions() { fetch(GOOGLE_SCRIPT_URL, {method:"POST", body:JSON.stringify({type:"DELETE_ALL"})}).then(()=>Swal.fire('Tüm Veriler Silindi')); }
+function reportObjection() { Swal.fire('Bildiriminiz İletildi.'); } 
 function toggleReview() { document.getElementById('reviewArea').classList.toggle('hidden'); }
