@@ -215,3 +215,29 @@ body.dark-mode .status-badge {
     border-color: rgba(5, 150, 105, 0.4);
     color: #34d399;
 }
+/* Chrome, Safari, Edge, Opera için okları gizle */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox için okları gizle */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+/* Soruların ve şıkların seçilmesini engelle */
+.q-text, .options-grid label, .question-header {
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE10+/Edge */
+    user-select: none;         /* Standard */
+}
+
+/* Ama öğrenci kendi yazdığı cevabı seçebilsin (Düzeltme yapması için) */
+textarea, input {
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+    -ms-user-select: text !important;
+    user-select: text !important;
+}

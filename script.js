@@ -313,8 +313,24 @@ function renderOptions(q, index) {
 
     // 1. Durum: Klasik Yazılı Cevap (Text)
     if (q.type === 'text') {
-        // BURAYA EKLENDİ: oninput içine updateNavVisuals() koyduk
-        div.innerHTML = `<textarea class="text-answer-input" rows="3" oninput="userAnswers[${index}]=this.value.trim(); updateNavVisuals(); saveProgressToLocal()">${currentAns||''}</textarea>`;
+        const val = currentAns || '';
+        div.innerHTML = `
+            <div style="position:relative;">
+                <textarea 
+                    class="text-answer-input" 
+                    rows="4" 
+                    maxlength="500"
+                    placeholder="Cevabınızı buraya yazınız..."
+                    oninput="
+                        this.nextElementSibling.innerText = this.value.length + '/500';
+                        userAnswers[${index}]=this.value.trim(); 
+                        updateNavVisuals(); 
+                        saveProgressToLocal()
+                    ">${val}</textarea>
+                <span style="position:absolute; bottom:10px; right:10px; font-size:0.8rem; color:#9ca3af;">
+                    ${val.length}/500
+                </span>
+            </div>`;
     
     // 2. Durum: Çoklu Seçim (Checkbox)
     } else if (q.type === 'checkbox') {
