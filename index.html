@@ -36,24 +36,27 @@
             <span id="displayName">Öğrenci</span>
             <span id="timerWrapper">⏱️ <span id="timer">30:00</span></span>
         </div>
+        
         <div class="question-card">
             <div class="question-header"><span class="q-badge" id="qIndex">SORU 1</span></div>
             <p id="qText" class="q-text">...</p>
             <img id="qImage" class="q-image" src="" style="display:none;">
             <div id="qOptions" class="options-grid"></div>
+            
             <div id="agentBox" class="agent-box hidden">
                 <span style="font-size: 1.5rem;">💡</span>
                 <div><strong>İpucu:</strong> <span id="agentText">...</span></div>
             </div>
-            <div style="text-align: right; margin-top: 10px;">
-            <button onclick="flagQuestion()" id="flagBtn" style="background: #f59e0b; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem;">
-        ⚠️ Bu Soruda Hata Var / İtiraz Et
-            </button>
-            </div>
 
-<button id="nextBtn" class="btn-primary" onclick="nextQuestion()" style="margin-top: 20px;">Sonraki Soru ➡️</button>
+            <div style="text-align: right; margin-top: 15px;">
+                <button onclick="flagQuestion()" id="flagBtn" style="background: #f59e0b; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem; border:none; border-radius:8px; cursor:pointer;">
+                    ⚠️ Bu Soruda Hata Var / İtiraz Et
+                </button>
+            </div>
         </div>
-        
+
+        <button id="nextBtn" class="btn-primary" onclick="nextQuestion()" style="margin-top: 20px;">Sonraki Soru ➡️</button>
+    </div>
 
     <div class="container hidden" id="resultScreen">
         <h1>🏁 Sınav Tamamlandı</h1>
@@ -85,8 +88,10 @@
         <button onclick="closeAdmin()" class="btn-secondary" style="margin-top:20px;">Kapat</button>
     </div>
 
-    <footer style="position: fixed; bottom: 10px; right: 10px; opacity: 0.7; cursor: pointer;">
-        <span onclick="toggleAdmin()" style="background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem;">🔒 Yönetici</span>
+    <footer style="position: fixed; bottom: 10px; right: 10px; z-index: 999; opacity: 0.8; cursor: pointer;">
+        <span onclick="toggleAdmin()" style="background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+            🔒 Yönetici
+        </span>
     </footer>
 
     <script src="script.js"></script>
