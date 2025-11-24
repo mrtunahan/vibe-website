@@ -16,6 +16,7 @@ let hintTimeout = null;
 let isExamActive = false;
 let hasAttemptedFullscreen = false;
 let userObjections = {}; // İtirazları burada tutacağız
+let studentHeartbeatInterval = null; // Kalp atışını durdurmak için bu değişken şart
 
 // -----------------------------------------------------
 // BAŞLANGIÇ & EVENT LISTENERLAR
@@ -430,8 +431,12 @@ function finishQuiz(type) {
     isExamActive = false; // Sınavı pasife çek (Böylece normal kalp atışı durur)
     
     clearInterval(examTimerInterval);
+    if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval); // <-- YENİ EKLENEN SATIR
+    
     if(hintTimeout) clearTimeout(hintTimeout);
     if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+
+    
 
     let score = 0;
     const pts = 100 / activeQuestions.length;
@@ -740,15 +745,15 @@ function saveProgressToLocal() {
     localStorage.setItem(`exam_progress_${studentNumber}`, JSON.stringify(dataToSave));
 }
 function startStudentHeartbeat() {
-    // Sadece sınav aktifse gönder
-    setInterval(() => {
+    // Eğer daha önce başlamışsa temizle (üst üste binmesin)
+    if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
+
+    // Döngüyü değişkene ata
+    studentHeartbeatInterval = setInterval(() => {
+        // Sınav aktif değilse veya numara yoksa dur
         if (!isExamActive || !studentNumber) return;
 
-        // İtiraz var mı kontrol et
         const activeObjection = userObjections[currentQuestionIndex] ? "VAR" : "-";
-        
-        // Kopya durumu kontrolü (daha önce belirlenmiş bir değişken var mı?)
-        // Basitçe aktif mi değil mi onu yolluyoruz.
         const cheatStatus = document.hidden ? "Sekme Arkada!" : "Temiz";
 
         const payload = {
@@ -760,13 +765,12 @@ function startStudentHeartbeat() {
             Itiraz: activeObjection
         };
 
-        // Arka planda sessizce gönder (await kullanma ki donmasın)
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify(payload)
-        }).catch(e => console.log("Heartbeat fail")); // Hata olursa öğrenciye hissettirme
+        }).catch(e => console.log("Heartbeat fail"));
 
-    }, 15000); // 15 Saniyede bir güncelle
+    }, 15000); // 15 Saniyede bir
 }
 let adminMonitorInterval = null;
 
