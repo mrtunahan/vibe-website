@@ -427,7 +427,8 @@ function confirmFinishQuiz() {
 
 function finishQuiz(type) {
     if (!isExamActive) return;
-    isExamActive = false;
+    isExamActive = false; // Sınavı pasife çek (Böylece normal kalp atışı durur)
+    
     clearInterval(examTimerInterval);
     if(hintTimeout) clearTimeout(hintTimeout);
     if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
@@ -456,30 +457,56 @@ function finishQuiz(type) {
 
     score = Math.round(score);
 
-    // Ekran Değişimi
+    // Ekran Değişimi (Animasyonlu)
     document.getElementById('quizScreen').classList.add('hidden');
-    
-    // --- DEĞİŞEN KISIM BAŞLANGIÇ ---
     const resultScreen = document.getElementById('resultScreen');
     resultScreen.classList.remove('hidden');
     
-    // Animasyonu Tetikle (Bu satır yeni)
     const scoreCard = document.querySelector('.score-card');
     if(scoreCard) scoreCard.classList.add('score-pop-animation');
-    // --- DEĞİŞEN KISIM BİTİŞ ---
 
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
 
-    // Durum Belirleme
+    // Durum Belirleme ve Feedback
     const fb = document.getElementById('feedbackMessage');
     let statusNote = "NORMAL";
 
+    // --- SİNYAL GÖNDERME MANTIĞI ---
     if (type.startsWith("CHEATING")) {
+        // 1. KOPYA DURUMU
         fb.innerHTML = "⚠️ KOPYA GİRİŞİMİ - SINAV İPTAL";
         fb.style.color = "red";
         statusNote = "KOPYA";
+
+        // Hoca Paneline "KOPYA" sinyali gönder
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "HEARTBEAT",
+                Numara: studentNumber,
+                Isim: studentName,
+                Soru: currentQuestionIndex + 1,
+                Kopya: "⚠️ KOPYA TESPİTİ",
+                Itiraz: "-"
+            })
+        }).catch(err => console.log("Kopya sinyali hatası"));
+
+    } else {
+        // 2. NORMAL BİTİŞ DURUMU
+        if (score >= 50) {
+            fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
+            fb.style.color = "green";
+            // Konfeti
+             if (window.confetti) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+        } else {
+            fb.innerHTML = "Kaldınız.";
+        }
+
+        // Hoca Paneline "BİTTİ" sinyali gönder (BU KISIM EKSİKTİ)
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -487,45 +514,36 @@ function finishQuiz(type) {
                 Numara: studentNumber,
                 Isim: studentName,
                 Soru: "BİTTİ",
-                Kopya: "⚠️ KOPYA TESPİTİ", // Bu metin admin panelinde kırmızıyı tetikler
+                Kopya: "🏁 TAMAMLANDI", // Bu metin paneli Yeşil yapar
                 Itiraz: "-"
             })
-        }).catch(err => console.log("Kopya sinyali gönderilemedi"));
-    } else if (score >= 60) {
-        fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
-        fb.style.color = "green";
-    } else {
-        fb.innerHTML = "Kaldınız.";
+        }).catch(err => console.log("Bitiş sinyali hatası"));
     }
 
     generateReviewPanel();
 
-    // ----------------------------------------------------------------
-    // BURASI YENİ EKLEDİĞİMİZ KISIM (İtirazları Hazırla ve Gönder)
-    // ----------------------------------------------------------------
-    
-    // 1. İtiraz nesnesini okunabilir metne çeviriyoruz
+    // İtirazları Topla
     let itirazMetni = "";
-    if (typeof userObjections !== 'undefined') { // userObjections tanımlı mı kontrolü
+    if (typeof userObjections !== 'undefined') {
         Object.keys(userObjections).forEach(key => {
             const soruNo = parseInt(key) + 1;
             itirazMetni += `[Soru ${soruNo}: ${userObjections[key]}] `;
         });
     }
-
-    // 2. Eğer hiç itiraz yoksa "-" koyalım
     if(itirazMetni === "") itirazMetni = "-";
 
-    // 3. Verileri (İtiraz dahil) Google Sheet'e gönderiyoruz
+    // Sonucu Kaydet (Google Sheet)
     sendToGoogleSheets({
         type: "RESULT",
         Isim: studentName,
         Numara: studentNumber,
         Puan: score,
         Durum: statusNote,
-        Itirazlar: itirazMetni // <-- Yeni alan burada
+        Itirazlar: itirazMetni
     });
     
+    // LocalStorage Temizliği
+    localStorage.removeItem(`exam_progress_${studentNumber}`);
 }
 
 // -----------------------------------------------------
