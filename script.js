@@ -445,6 +445,7 @@ function finishQuiz(type) {
         Durum: statusNote,
         Itirazlar: itirazMetni // <-- Yeni alan burada
     });
+    loadLeaderboard();
 }
 
 // -----------------------------------------------------
@@ -626,4 +627,95 @@ function updateNavVisuals() {
             btn.classList.add('active');
         }
     });
+}
+// --- LEADERBOARD FONKSİYONU ---
+function getLeaderboard() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Ogrenciler");
+  if (!sheet) return responseJSON([]);
+
+  // Verileri al (Başlık hariç)
+  const data = sheet.getDataRange().getDisplayValues();
+  let scores = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const isim = data[i][1] + " " + data[i][2]; // Ad + Soyad
+    const puan = data[i][3]; // D Sütunu (Puan)
+
+    // Sadece puanı olanları (sınava girmişleri) al
+    if (puan && puan.trim() !== "") {
+      scores.push({
+        name: isim,
+        score: parseInt(puan)
+      });
+    }
+  }
+
+  // Puana göre büyükten küçüğe sırala
+  scores.sort((a, b) => b.score - a.score);
+
+  // İlk 10 kişiyi al
+  const top10 = scores.slice(0, 10);
+
+  return responseJSON({ status: "success", data: top10 });
+}
+// --- LEADERBOARD FONKSİYONLARI ---
+
+// 1. İsim Sansürleme Fonksiyonu (Ahmet Yılmaz -> Ah*** Yıl***)
+function censorName(fullName) {
+    if (!fullName) return "*** ***";
+    const parts = fullName.split(" ");
+    
+    // Her kelimenin ilk 2 harfini al, gerisine yıldız koy
+    const censoredParts = parts.map(part => {
+        if (part.length > 2) {
+            return part.substring(0, 2) + "*".repeat(3); // İlk 2 harf + 3 yıldız
+        }
+        return part + "*"; // Kısa isimse direkt sonuna yıldız
+    });
+    
+    return censoredParts.join(" ");
+}
+
+// 2. Leaderboard'u Çek ve Listele
+async function loadLeaderboard() {
+    const list = document.getElementById('leaderboardList');
+    list.innerHTML = '<li style="text-align:center;">Sıralama yükleniyor...</li>';
+
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({ type: "GET_LEADERBOARD" })
+        });
+        const result = await response.json();
+
+        if (result.status === "success" && result.data) {
+            list.innerHTML = ""; // Listeyi temizle
+            
+            result.data.forEach((student, index) => {
+                const rank = index + 1;
+                let rankClass = "";
+                let icon = `#${rank}`;
+
+                // İlk 3'e özel ikonlar
+                if (rank === 1) { rankClass = "rank-1"; icon = "🥇"; }
+                if (rank === 2) { rankClass = "rank-2"; icon = "🥈"; }
+                if (rank === 3) { rankClass = "rank-3"; icon = "🥉"; }
+
+                const li = document.createElement('li');
+                li.className = `rank-item ${rankClass}`;
+                
+                // İsim sansürleniyor
+                const gizliIsim = censorName(student.name);
+
+                li.innerHTML = `
+                    <span>${icon} <span class="censored-name">${gizliIsim}</span></span>
+                    <strong>${student.score} P</strong>
+                `;
+                list.appendChild(li);
+            });
+        }
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<li style="color:red; text-align:center;">Sıralama alınamadı.</li>';
+    }
 }
