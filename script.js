@@ -519,7 +519,7 @@ function finishQuiz(type) {
                 Numara: studentNumber,
                 Isim: studentName,
                 Soru: "BİTTİ",
-                Kopya: "🏁 TAMAMLANDI", // Bu metin paneli Yeşil yapar
+                Kopya: "TAMAMLANDI", // Bu metin paneli Yeşil yapar
                 Itiraz: "-"
             })
         }).catch(err => console.log("Bitiş sinyali hatası"));
@@ -832,7 +832,7 @@ function fetchLiveTable() {
             else if (kopya.includes("TAMAMLANDI")) {
                 // BİTİRME DURUMU (YEŞİL/MAVİ)
                 rowStyle = "background:#ecfdf5; color:#047857; font-weight:bold;"; // Açık yeşil zemin, koyu yeşil yazı
-                durumIkon = "🏁 BİTTİ";
+                durumIkon = "BİTTİ";
             }
             // -------------------------------------------
             
