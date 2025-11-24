@@ -22,15 +22,11 @@ let userObjections = {}; // İtirazları burada tutacağız
 // -----------------------------------------------------
 function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
-    
-    // Tercihi hafızaya al
     const isDark = document.body.classList.contains('dark-mode');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
 }
 
 // 2. Sayfa açılınca tercihi hatırla
-// (Bunu mevcut document.addEventListener('DOMContentLoaded', ...) içine de koyabilirsin, 
-// ama en garanti yöntem bunu dosyanın en altına ayrı bir blok olarak eklemektir.)
 document.addEventListener('DOMContentLoaded', () => {
     if(localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
