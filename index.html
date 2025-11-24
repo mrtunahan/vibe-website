@@ -17,22 +17,24 @@
 
     <img src="https://websitem.karatekin.edu.tr/user_files/ahmettunahankorkmaz/profil_pic/21102024101020970.jpg" alt="Uni Logo" class="uni-logo" >
     
-    <h1>Final Sınavı Giriş</h1>
-    <p>Lütfen öğrenci bilgilerinizi giriniz.</p>
+    <div class="animate-entry delay-1">
+        <h1>Final Sınavı Giriş</h1>
+        <p>Lütfen öğrenci bilgilerinizi giriniz.</p>
+    </div>
     
-    <input type="text" id="studentNameDisplay" placeholder="Öğrenci Adı (Numarayı yazınca otomatik gelir)" disabled style="background: #f3f4f6; cursor: not-allowed; font-weight: bold; color: #4F46E5;">
+    <input type="text" id="studentNameDisplay" class="animate-entry delay-2" placeholder="Öğrenci Adı (Numarayı yazınca otomatik gelir)" disabled style="background: #f3f4f6; cursor: not-allowed; font-weight: bold; color: #4F46E5;">
     
-    <input type="number" id="studentId" placeholder="Öğrenci No (9 Hane)" autocomplete="off">
+    <input type="number" id="studentId" class="animate-entry delay-3" placeholder="Öğrenci No (9 Hane)" autocomplete="off">
     
-    <div class="warning-box">
+    <div class="warning-box animate-entry delay-4">
         <strong>⚠️ SINAV KURALLARI:</strong><br>
         • Numaranız sistemde kayıtlı olmalıdır.<br>
         • Sadece <strong>tek giriş</strong> hakkınız vardır.<br>
         • Tam ekran zorunludur.
     </div>
     
-    <button id="startBtn" class="btn-primary" onclick="startQuizAttempt()">Giriş Yap ve Başlat</button>
-</div> 
+    <button id="startBtn" class="btn-primary animate-entry delay-4" onclick="startQuizAttempt()">Giriş Yap ve Başlat</button>
+</div>
     <div class="container hidden" id="quizScreen">
         <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
         <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>

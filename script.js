@@ -458,7 +458,16 @@ function finishQuiz(type) {
 
     // Ekran Değişimi
     document.getElementById('quizScreen').classList.add('hidden');
-    document.getElementById('resultScreen').classList.remove('hidden');
+    
+    // --- DEĞİŞEN KISIM BAŞLANGIÇ ---
+    const resultScreen = document.getElementById('resultScreen');
+    resultScreen.classList.remove('hidden');
+    
+    // Animasyonu Tetikle (Bu satır yeni)
+    const scoreCard = document.querySelector('.score-card');
+    if(scoreCard) scoreCard.classList.add('score-pop-animation');
+    // --- DEĞİŞEN KISIM BİTİŞ ---
+
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
