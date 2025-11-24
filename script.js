@@ -1,5 +1,5 @@
 // ==================================================================
-// ⚠️ BURAYA KENDİ WEB APP URL'NİZİ YAPIŞTIRIN
+// ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7dzo5tOnoQ5WuFWgU6XPpoS1yTp1DMA0wtGvn_WGoTAhJzzMskKdwPpOOUewZfVPk/exec';
 
@@ -17,19 +17,19 @@ let isExamActive = false;
 let hasAttemptedFullscreen = false;
 
 // -----------------------------------------------------
-// BAŞLANGIÇ
+// BAŞLANGIÇ & EVENT LISTENERLAR
 // -----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
+    const studentIdInput = document.getElementById('studentId');
     
-    // Soruları arka planda çek
+    // 1. SORULARI ÇEK
     fetch(GOOGLE_SCRIPT_URL)
         .then(r => r.json())
         .then(data => {
             if (Array.isArray(data)) questionsSource = data;
             
             if (!questionsSource || questionsSource.length === 0) {
-                // Soru yoksa bile butonu açık bırakıyoruz ki admin paneline erişim kilitlenmesin
                 startBtn.innerText = "Soru Yok (Yönetici Girişi Yapın)";
             } else {
                 startBtn.innerText = "Giriş Yap ve Başlat";
@@ -40,6 +40,34 @@ document.addEventListener('DOMContentLoaded', () => {
             startBtn.innerText = "Bağlantı Hatası (Sayfayı Yenile)";
         });
 
+    // 2. OTOMATİK İSİM GETİRME (Kullanıcı numarayı yazıp çıkınca çalışır)
+    studentIdInput.addEventListener('blur', async function() {
+        const numara = this.value.trim();
+        const nameDisplay = document.getElementById('studentNameDisplay');
+
+        if(numara.length === 9) {
+            nameDisplay.value = "İsim aranıyor...";
+            try {
+                // Sadece isim kontrolü için hafif bir istek atıyoruz
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: "POST",
+                    body: JSON.stringify({ type: "CHECK_ACCESS", Numara: numara })
+                });
+                const result = await response.json();
+                
+                if(result.status === "success" && result.name) {
+                    nameDisplay.value = result.name;
+                    studentName = result.name; // Global değişkeni güncelle
+                } else {
+                    nameDisplay.value = "Kayıt bulunamadı!";
+                }
+            } catch (error) {
+                nameDisplay.value = "Bağlantı hatası!";
+            }
+        }
+    });
+
+    // Güvenlik önlemleri
     document.addEventListener("visibilitychange", () => { if(document.hidden && isExamActive) finishQuiz("CHEATING_TAB"); });
     document.addEventListener("fullscreenchange", () => { if(!document.fullscreenElement && isExamActive && hasAttemptedFullscreen) finishQuiz("CHEATING_ESC"); });
     document.onkeydown = function (e) { if (e.keyCode === 123 || (e.ctrlKey && e.keyCode === 85)) return false; };
@@ -71,18 +99,20 @@ function openFullscreen() {
 }
 
 // -----------------------------------------------------
-// GİRİŞ VE BAŞLATMA
+// GİRİŞ VE BAŞLATMA (DÜZELTİLDİ: DONMA SORUNU ÇÖZÜLDÜ)
 // -----------------------------------------------------
 async function startQuizAttempt() {
     const idInput = document.getElementById('studentId');
     const startBtn = document.getElementById('startBtn');
     const id = idInput.value.toString().trim();
 
+    // Validasyon
     if (id.length !== 9) {
         Swal.fire({ icon: 'error', title: 'Hata', text: 'Öğrenci numarası 9 haneli olmalıdır.' });
         return;
     }
 
+    // Butonu Kilitle
     startBtn.disabled = true;
     const originalText = startBtn.innerText;
     startBtn.innerText = "Kontrol Ediliyor... 🔄";
@@ -92,28 +122,41 @@ async function startQuizAttempt() {
             method: "POST",
             body: JSON.stringify({ type: "CHECK_ACCESS", Numara: id })
         });
+        
+        // Yanıtın JSON olup olmadığını kontrol et
+        if (!response.ok) throw new Error("Sunucu hatası");
+        
         const result = await response.json();
 
         if (result.status === "error") {
             Swal.fire({ icon: 'error', title: 'Giriş Başarısız', text: result.message });
-            startBtn.disabled = false;
-            startBtn.innerText = originalText;
-            return;
+        } else {
+            // Başarılı Giriş
+            studentName = result.name;
+            studentNumber = id;
+            
+            // Tam ekrana geçmeyi dene
+            try { await openFullscreen(); } catch (e) { console.log("Tam ekran reddedildi"); }
+
+            // Sınavı başlat
+            setTimeout(() => {
+                hasAttemptedFullscreen = true;
+                initializeQuiz();
+            }, 500);
+            
+            // Başarılı olursa butonu resetlemeye gerek yok, ekran değişecek
+            return; 
         }
 
-        // Başarılı
-        studentName = result.name;
-        studentNumber = id;
-
-        try { await openFullscreen(); } catch (e) {}
-
-        setTimeout(() => {
-            hasAttemptedFullscreen = true;
-            initializeQuiz();
-        }, 500);
-
     } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya bağlanılamadı. Kod.gs dosyasını kontrol edin ve tekrar Deploy edin.' });
+        console.error(e);
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Hata', 
+            text: 'Sunucuya bağlanılamadı veya internet kesildi. Lütfen tekrar deneyin.' 
+        });
+    } finally {
+        // Hata durumunda veya başarısız girişte butonu eski haline getir (DONMAYI ENGELLER)
         startBtn.disabled = false;
         startBtn.innerText = originalText;
     }
@@ -197,7 +240,7 @@ function showQuestion(index) {
         hintTimeout = setTimeout(() => {
             document.getElementById('agentText').innerText = q.hint;
             agentBox.classList.remove('hidden');
-        }, 45000);
+        }, 45000); // 45 Saniye sonra ipucu
     }
     
     if (window.MathJax) MathJax.typesetPromise([document.getElementById('quizScreen')]).catch(()=>{});
