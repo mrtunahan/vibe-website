@@ -310,8 +310,36 @@ function startExamTimer() {
 }
 
 function confirmFinishQuiz() {
-    Swal.fire({ title: 'Bitir?', icon: 'question', showCancelButton: true, confirmButtonText: 'Evet', cancelButtonText: 'Hayır' })
-        .then((r) => { if (r.isConfirmed) finishQuiz('NORMAL'); });
+    // Boş soruları say
+    let bosSayisi = 0;
+    activeQuestions.forEach((q, index) => {
+        if (userAnswers[index] === null || userAnswers[index] === "") {
+            bosSayisi++;
+        }
+    });
+
+    let uyariMetni = "Sınavı bitirmek istediğinize emin misiniz?";
+    let ikon = "question";
+
+    if (bosSayisi > 0) {
+        uyariMetni = `⚠️ DİKKAT: ${bosSayisi} soruyu BOŞ bıraktınız! Yine de bitirmek istiyor musunuz?`;
+        ikon = "warning";
+    }
+
+    Swal.fire({
+        title: 'Sınavı Bitir?',
+        text: uyariMetni,
+        icon: ikon,
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Evet, Bitir',
+        cancelButtonText: 'Hayır, Kontrol Edeceğim'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            finishQuiz('NORMAL');
+        }
+    });
 }
 
 // script.js dosyasındaki finishQuiz fonksiyonunu tamamen bununla değiştir:
