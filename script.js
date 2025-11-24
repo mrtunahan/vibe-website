@@ -23,6 +23,20 @@ let userObjections = {}; // İtirazları burada tutacağız
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
     const studentIdInput = document.getElementById('studentId');
+    function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    // Tercihi kaydet (Sayfa yenilenince hatırlasın)
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+    // Sayfa yüklenirken tercihi kontrol et (DOMContentLoaded içine ekle)
+    document.addEventListener('DOMContentLoaded', () => {
+        if(localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        // ... diğer kodların ...
+    });
     
     // 1. SORULARI ÇEK
     fetch(GOOGLE_SCRIPT_URL)
