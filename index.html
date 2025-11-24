@@ -62,28 +62,17 @@
         <button id="nextBtn" class="btn-primary" onclick="nextQuestion()" style="margin-top: 20px;">Sonraki Soru ➡️</button>
     </div>
 
-    <div class="container hidden" id="resultScreen" style="max-width: 900px;"> <h1>🏁 Sınav Tamamlandı</h1>
-        
-        <div class="result-layout">
-            <div class="score-card">
-                <h2 id="resultName">...</h2>
-                <p>No: <span id="resultId">...</span></p>
-                <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-                <span>PUANINIZ</span>
-                <span id="score">0</span>
-                <p id="feedbackMessage" style="font-weight: bold;"></p>
-                
-                <button onclick="toggleReview()" class="btn-secondary" style="margin-top:20px;">🔍 Cevap Anahtarını Gör</button>
-            </div>
-
-            <div class="leaderboard-panel">
-                <h3>🏆 En İyiler (Top 10)</h3>
-                <ul id="leaderboardList">
-                    <li>Yükleniyor...</li>
-                </ul>
-            </div>
+    <div class="container hidden" id="resultScreen">
+        <h1>🏁 Sınav Tamamlandı</h1>
+        <div class="score-card">
+            <h2 id="resultName">...</h2>
+            <p>No: <span id="resultId">...</span></p>
+            <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+            <span>PUANINIZ</span>
+            <span id="score">0</span>
+            <p id="feedbackMessage" style="font-weight: bold;"></p>
         </div>
-
+        <button onclick="toggleReview()" class="btn-secondary">🔍 Cevap Anahtarını Gör</button>
         <div id="reviewArea" class="hidden review-area"></div>
     </div>
 
