@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ BURAYA KENDİ WEB APP URL'NİZİ YAPIŞTIRIN
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYxMcB2LSGNn1Cq2upiXNjOTbyLfItpMj23CA_A4KcqW_QshHNAw3m8VNfcMwtUgzJ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7dzo5tOnoQ5WuFWgU6XPpoS1yTp1DMA0wtGvn_WGoTAhJzzMskKdwPpOOUewZfVPk/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -22,25 +22,24 @@ let hasAttemptedFullscreen = false;
 document.addEventListener('DOMContentLoaded', () => {
     const startBtn = document.getElementById('startBtn');
     
-    // Verileri Çek
+    // Soruları arka planda çek
     fetch(GOOGLE_SCRIPT_URL)
         .then(r => r.json())
         .then(data => {
             if (Array.isArray(data)) questionsSource = data;
-            else if (data.error) console.error(data.error);
-
+            
             if (!questionsSource || questionsSource.length === 0) {
-                startBtn.innerText = "Soru Yok (Yönetici Girişi Yapınız)";
+                // Soru yoksa bile butonu açık bırakıyoruz ki admin paneline erişim kilitlenmesin
+                startBtn.innerText = "Soru Yok (Yönetici Girişi Yapın)";
             } else {
                 startBtn.innerText = "Giriş Yap ve Başlat";
             }
         })
         .catch(err => {
             console.error("Veri hatası:", err);
-            startBtn.innerText = "Bağlantı Hatası (Sayfayı Yenileyin)";
+            startBtn.innerText = "Bağlantı Hatası (Sayfayı Yenile)";
         });
 
-    // Anti-cheat
     document.addEventListener("visibilitychange", () => { if(document.hidden && isExamActive) finishQuiz("CHEATING_TAB"); });
     document.addEventListener("fullscreenchange", () => { if(!document.fullscreenElement && isExamActive && hasAttemptedFullscreen) finishQuiz("CHEATING_ESC"); });
     document.onkeydown = function (e) { if (e.keyCode === 123 || (e.ctrlKey && e.keyCode === 85)) return false; };
@@ -57,7 +56,6 @@ function shuffleArray(array) {
     return array;
 }
 
-// Şifreleme (Basit Base64)
 function obfuscateAnswer(answer) {
     try { return btoa(encodeURIComponent(answer)).split("").reverse().join(""); } catch (e) { return answer; }
 }
@@ -86,6 +84,7 @@ async function startQuizAttempt() {
     }
 
     startBtn.disabled = true;
+    const originalText = startBtn.innerText;
     startBtn.innerText = "Kontrol Ediliyor... 🔄";
 
     try {
@@ -98,7 +97,7 @@ async function startQuizAttempt() {
         if (result.status === "error") {
             Swal.fire({ icon: 'error', title: 'Giriş Başarısız', text: result.message });
             startBtn.disabled = false;
-            startBtn.innerText = "Giriş Yap ve Başlat";
+            startBtn.innerText = originalText;
             return;
         }
 
@@ -114,9 +113,9 @@ async function startQuizAttempt() {
         }, 500);
 
     } catch (e) {
-        Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya bağlanılamadı. İnternetinizi kontrol edin.' });
+        Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya bağlanılamadı. Kod.gs dosyasını kontrol edin ve tekrar Deploy edin.' });
         startBtn.disabled = false;
-        startBtn.innerText = "Giriş Yap ve Başlat";
+        startBtn.innerText = originalText;
     }
 }
 
@@ -125,7 +124,7 @@ async function startQuizAttempt() {
 // -----------------------------------------------------
 function initializeQuiz() {
     if (!questionsSource || questionsSource.length === 0) {
-        Swal.fire('Hata', 'Soru bulunamadı.', 'error');
+        Swal.fire('Uyarı', 'Sistemde soru bulunamadı. Lütfen yönetici panelinden soru yükleyin.', 'warning');
         return;
     }
 
@@ -133,28 +132,18 @@ function initializeQuiz() {
     const shuffledQuestions = shuffleArray([...questionsSource]);
 
     activeQuestions = shuffledQuestions.map(q => {
-        // Seçenekleri karıştır
         const optionsWithIndex = (q.options || []).map((opt, idx) => ({ val: opt, originalIdx: idx }));
         const shuffledOptionsMap = shuffleArray(optionsWithIndex);
         const finalOptions = shuffledOptionsMap.map(o => o.val);
 
-        // Doğru cevabın YENİ indexini bul
         let newAnswerIndex = "";
-        
         if (q.type === 'text') {
-            newAnswerIndex = q.answer; // Metin cevabı değişmez
+            newAnswerIndex = q.answer;
         } else {
-            // Radio veya Checkbox için index eşleşmesi
-            // Excel'den gelen cevap (0, 1 vs) string olabilir, toString() ile garantiye alıyoruz
             const originalAnsStr = (q.answer !== undefined && q.answer !== null) ? q.answer.toString() : "";
-            
-            // Eğer cevap virgüllü çoklu seçimse (0,2 gibi)
             if(q.type === 'checkbox' && originalAnsStr.includes(',')) {
-                // Bu örnek basit tutulmuştur, checkbox karışıklığı için daha kompleks mantık gerekebilir.
-                // Şimdilik checkbox cevaplarını string olarak saklıyoruz.
                 newAnswerIndex = originalAnsStr; 
             } else {
-                // Tekli seçim (Radio)
                 const found = shuffledOptionsMap.findIndex(o => o.originalIdx.toString() === originalAnsStr);
                 newAnswerIndex = found !== -1 ? found : "";
             }
@@ -163,7 +152,6 @@ function initializeQuiz() {
         return {
             ...q,
             options: finalOptions,
-            // Cevabı şifrele
             _secureAnswer: obfuscateAnswer(newAnswerIndex.toString()),
             topic: q.topic || "Genel",
             image: q.image || ""
@@ -171,11 +159,9 @@ function initializeQuiz() {
     });
 
     userAnswers = new Array(activeQuestions.length).fill(null);
-
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
     document.getElementById('displayName').innerText = studentName;
-
     currentQuestionIndex = 0;
     showQuestion(0);
     startExamTimer();
@@ -237,7 +223,7 @@ function renderOptions(q, index) {
             lbl.querySelector('input').onchange = (e) => {
                 if(e.target.checked) sel.push(i); else sel = sel.filter(x=>x!==i);
                 userAnswers[index] = JSON.stringify(sel);
-                renderOptions(q, index); // UI Yenile
+                renderOptions(q, index); 
             };
             div.appendChild(lbl);
         });
@@ -292,7 +278,6 @@ function finishQuiz(type) {
         if (q.type === 'text') {
             isOk = (user && user.toLowerCase() === correct.toLowerCase());
         } else if (q.type === 'checkbox') {
-             // Basit kontrol
              isOk = (user === correct); 
         } else {
             isOk = (user === correct);
@@ -323,9 +308,8 @@ function finishQuiz(type) {
         fb.innerHTML = "Kaldınız.";
     }
 
-    generateReviewPanel(); // Cevap anahtarını oluştur
+    generateReviewPanel();
 
-    // Sonucu Kaydet
     sendToGoogleSheets({
         type: "RESULT",
         Isim: studentName,
@@ -353,7 +337,6 @@ function generateReviewPanel() {
             correctDisp = correctIdx;
             isCorrect = (userDisp.toLowerCase() === correctDisp.toLowerCase());
         } else {
-            // Radio
             userDisp = (userIdx !== null && q.options[userIdx]) ? q.options[userIdx] : "(Boş)";
             correctDisp = q.options[correctIdx] ? q.options[correctIdx] : "Hata";
             isCorrect = (userIdx === correctIdx);
@@ -388,6 +371,7 @@ function adminLoginAttempt() {
     if(p === "zeynep1605") {
         document.getElementById('adminLogin').classList.add('hidden');
         document.getElementById('adminControls').classList.remove('hidden');
+        Swal.fire({toast:true, icon:'success', title:'Hoş geldin Yönetici', timer:1500, showConfirmButton:false});
     } else {
         Swal.fire('Hatalı Şifre');
     }
