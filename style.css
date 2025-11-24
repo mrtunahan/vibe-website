@@ -17,9 +17,42 @@ body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-gradien
     user-select: none; /* Standard syntax */}
 .container { background: var(--surface); width: 90%; max-width: 650px; padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; position: relative; overflow: hidden; margin: 20px; transition: all 0.3s ease; }
 .hidden { display: none !important; }
-.uni-logo { width: 80px; margin-bottom: 15px; }
-h1 { font-size: 1.8rem; font-weight: 800; margin: 0 0 10px 0; color: #111827; }
-p { color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+.uni-logo { 
+    width: 110px;               /* Biraz büyütelim */
+    height: 110px;              /* Tam kare boyut */
+    object-fit: cover;          /* Resim bozulmasın */
+    border-radius: 50%;         /* Tam yuvarlak yap */
+    margin-bottom: 20px; 
+    
+    /* Havalı bir çerçeve ve gölge */
+    border: 4px solid #fff;     
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3); 
+    
+    /* Animasyon ekleyelim */
+    animation: slideDown 0.8s ease-out;
+}
+/* Dark mode uyumu için logonun çerçevesini ayarlayalım */
+body.dark-mode .uni-logo {
+    border-color: #374151;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+h1 { 
+    font-size: 2rem; 
+    font-weight: 800; 
+    margin: 0 0 5px 0; 
+    
+    /* Modern bir renk geçişi (Gradient) */
+    background: linear-gradient(to right, #4F46E5, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    letter-spacing: -0.5px;
+}
+p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 25px;
+}
 input, textarea { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1rem; outline: none; box-sizing: border-box; transition: 0.3s; font-family: inherit; }
 input:focus, textarea:focus { border-color: var(--primary); background: #f9fafb; }
 button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px; }
@@ -147,4 +180,33 @@ body.dark-mode .options-grid label {
 }
 body.dark-mode .options-grid label:hover {
     background: #374151;
+}
+/* Animasyon Tanımı */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* EKSTRA: Sistem Durumu Rozeti */
+.status-badge {
+    display: inline-block;
+    background: #ecfdf5;
+    color: #059669;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    border: 1px solid #d1fae5;
+}
+body.dark-mode .status-badge {
+    background: rgba(5, 150, 105, 0.2);
+    border-color: rgba(5, 150, 105, 0.4);
+    color: #34d399;
 }
