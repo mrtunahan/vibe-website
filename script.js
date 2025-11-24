@@ -826,15 +826,6 @@ function fetchLiveTable() {
             // Son aktiflik zamanına göre "Online/Offline" kararı (Basit mantık)
             // (Apps Script zamanı metin gönderdiği için burada basit ikon kullanacağız)
             
-            const tr = document.createElement('tr');
-            tr.style = rowStyle;
-            tr.innerHTML = `
-                <td style="padding:8px;">${num}</td>
-                <td style="padding:8px;">${isim}</td>
-                <td style="padding:8px;">${isSuspicious ? '⚠️ DİKKAT' : '🟢 Aktif'}</td>
-                <td style="padding:8px; text-align:center;">${soru}. Soru</td>
-                <td style="padding:8px; text-align:center;">${itiraz !== "-" ? "🚩 VAR" : "-"}</td>
-            `;
             tbody.appendChild(tr);
         });
     })
