@@ -455,6 +455,17 @@ function finishQuiz(type) {
         fb.innerHTML = "⚠️ KOPYA GİRİŞİMİ - SINAV İPTAL";
         fb.style.color = "red";
         statusNote = "KOPYA";
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "HEARTBEAT",
+                Numara: studentNumber,
+                Isim: studentName,
+                Soru: currentQuestionIndex + 1,
+                Kopya: "⚠️ KOPYA TESPİTİ", // Bu metin admin panelinde kırmızıyı tetikler
+                Itiraz: "-"
+            })
+        }).catch(err => console.log("Kopya sinyali gönderilemedi"));
     } else if (score >= 50) {
         fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
         fb.style.color = "green";
