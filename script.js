@@ -15,6 +15,7 @@ let examTimerInterval = null;
 let hintTimeout = null;
 let isExamActive = false;
 let hasAttemptedFullscreen = false;
+let userObjections = {}; // İtirazları burada tutacağız
 
 // -----------------------------------------------------
 // BAŞLANGIÇ & EVENT LISTENERLAR
@@ -255,6 +256,7 @@ function showQuestion(index) {
     }
     
     if (window.MathJax) MathJax.typesetPromise([document.getElementById('quizScreen')]).catch(()=>{});
+    updateFlagButtonColor();
 }
 
 function renderOptions(q, index) {
@@ -312,6 +314,8 @@ function confirmFinishQuiz() {
         .then((r) => { if (r.isConfirmed) finishQuiz('NORMAL'); });
 }
 
+// script.js dosyasındaki finishQuiz fonksiyonunu tamamen bununla değiştir:
+
 function finishQuiz(type) {
     if (!isExamActive) return;
     isExamActive = false;
@@ -322,6 +326,7 @@ function finishQuiz(type) {
     let score = 0;
     const pts = 100 / activeQuestions.length;
 
+    // Puanlama Mantığı
     activeQuestions.forEach((q, i) => {
         if(type.startsWith("CHEATING")) return;
 
@@ -342,12 +347,14 @@ function finishQuiz(type) {
 
     score = Math.round(score);
 
+    // Ekran Değişimi
     document.getElementById('quizScreen').classList.add('hidden');
     document.getElementById('resultScreen').classList.remove('hidden');
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
 
+    // Durum Belirleme
     const fb = document.getElementById('feedbackMessage');
     let statusNote = "NORMAL";
 
@@ -364,12 +371,30 @@ function finishQuiz(type) {
 
     generateReviewPanel();
 
+    // ----------------------------------------------------------------
+    // BURASI YENİ EKLEDİĞİMİZ KISIM (İtirazları Hazırla ve Gönder)
+    // ----------------------------------------------------------------
+    
+    // 1. İtiraz nesnesini okunabilir metne çeviriyoruz
+    let itirazMetni = "";
+    if (typeof userObjections !== 'undefined') { // userObjections tanımlı mı kontrolü
+        Object.keys(userObjections).forEach(key => {
+            const soruNo = parseInt(key) + 1;
+            itirazMetni += `[Soru ${soruNo}: ${userObjections[key]}] `;
+        });
+    }
+
+    // 2. Eğer hiç itiraz yoksa "-" koyalım
+    if(itirazMetni === "") itirazMetni = "-";
+
+    // 3. Verileri (İtiraz dahil) Google Sheet'e gönderiyoruz
     sendToGoogleSheets({
         type: "RESULT",
         Isim: studentName,
         Numara: studentNumber,
         Puan: score,
-        Durum: statusNote
+        Durum: statusNote,
+        Itirazlar: itirazMetni // <-- Yeni alan burada
     });
 }
 
@@ -458,4 +483,46 @@ function deleteQuestions() {
         method: "POST",
         body: JSON.stringify({ type: "DELETE_ALL" })
     }).then(() => Swal.fire('Silindi'));
+}
+function flagQuestion() {
+    const qIndex = currentQuestionIndex; // O anki soru numarası
+    
+    // Daha önce itiraz ettiyse onu göster, yoksa boş gelsin
+    const eskiItiraz = userObjections[qIndex] || "";
+
+    Swal.fire({
+        title: 'Soruya İtiraz Et',
+        input: 'textarea',
+        inputLabel: 'Bu sorudaki hata nedir?',
+        inputValue: eskiItiraz,
+        inputPlaceholder: 'Örn: Doğru şık seçeneklerde yok...',
+        showCancelButton: true,
+        confirmButtonText: 'Kaydet',
+        cancelButtonText: 'İptal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const mesaj = result.value;
+            if (mesaj) {
+                userObjections[qIndex] = mesaj;
+                Swal.fire('Kaydedildi', 'İtirazınız sınav sonunda hocaya iletilecek.', 'success');
+                updateFlagButtonColor(); // Buton rengini değiştir
+            } else {
+                // Eğer boş bırakıp kaydet derse itirazı sil
+                delete userObjections[qIndex];
+                updateFlagButtonColor();
+            }
+        }
+    });
+}
+
+function updateFlagButtonColor() {
+    const btn = document.getElementById('flagBtn');
+    // Eğer bu soruya itiraz edildiyse butonu kırmızı yap, yoksa turuncu kalsın
+    if (userObjections[currentQuestionIndex]) {
+        btn.style.background = "#ef4444"; // Kırmızı
+        btn.innerText = "⚠️ İtiraz Edildi (Düzenle)";
+    } else {
+        btn.style.background = "#f59e0b"; // Turuncu
+        btn.innerText = "⚠️ Bu Soruda Hata Var / İtiraz Et";
+    }
 }
