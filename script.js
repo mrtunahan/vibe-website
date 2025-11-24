@@ -220,6 +220,10 @@ function initializeQuiz() {
     currentQuestionIndex = 0;
     showQuestion(0);
     startExamTimer();
+    
+
+    createNavButtons(); // <-- YENİ: Butonları oluştur
+    updateNavVisuals(); // <-- YENİ: İlk durumu boya
 }
 
 function showQuestion(index) {
@@ -257,6 +261,7 @@ function showQuestion(index) {
     
     if (window.MathJax) MathJax.typesetPromise([document.getElementById('quizScreen')]).catch(()=>{});
     updateFlagButtonColor();
+    updateNavVisuals(); // <-- YENİ: Hangi sorudayız güncelle
 }
 
 function renderOptions(q, index) {
@@ -264,8 +269,12 @@ function renderOptions(q, index) {
     div.innerHTML = "";
     const currentAns = userAnswers[index];
 
+    // 1. Durum: Klasik Yazılı Cevap (Text)
     if (q.type === 'text') {
-        div.innerHTML = `<textarea class="text-answer-input" rows="3" oninput="userAnswers[${index}]=this.value.trim()">${currentAns||''}</textarea>`;
+        // BURAYA EKLENDİ: oninput içine updateNavVisuals() koyduk
+        div.innerHTML = `<textarea class="text-answer-input" rows="3" oninput="userAnswers[${index}]=this.value.trim(); updateNavVisuals()">${currentAns||''}</textarea>`;
+    
+    // 2. Durum: Çoklu Seçim (Checkbox)
     } else if (q.type === 'checkbox') {
         let sel = currentAns ? JSON.parse(currentAns) : [];
         q.options.forEach((opt, i) => {
@@ -273,23 +282,35 @@ function renderOptions(q, index) {
             const lbl = document.createElement('label');
             if(isChk) lbl.className='selected';
             lbl.innerHTML = `<input type="checkbox" ${isChk?'checked':''}><span>${opt}</span>`;
+            
             lbl.onclick = (e) => {
                 if(e.target.tagName!=='INPUT') lbl.querySelector('input').click();
             };
+            
+            // BURAYA EKLENDİ: Checkbox değişince nav güncellensin
             lbl.querySelector('input').onchange = (e) => {
                 if(e.target.checked) sel.push(i); else sel = sel.filter(x=>x!==i);
                 userAnswers[index] = JSON.stringify(sel);
                 renderOptions(q, index); 
+                updateNavVisuals(); // <--- YENİ
             };
             div.appendChild(lbl);
         });
-    } else { // Radio
+
+    // 3. Durum: Tekli Seçim (Radio - Varsayılan)
+    } else { 
         q.options.forEach((opt, i) => {
             const isChk = (currentAns !== null && parseInt(currentAns) === i);
             const lbl = document.createElement('label');
             if(isChk) lbl.className='selected';
             lbl.innerHTML = `<input type="radio" name="opt${index}" ${isChk?'checked':''}><span>${opt}</span>`;
-            lbl.onclick = () => { userAnswers[index] = i.toString(); renderOptions(q, index); };
+            
+            // BURAYA EKLENDİ: Şıkkı seçince nav güncellensin
+            lbl.onclick = () => { 
+                userAnswers[index] = i.toString(); 
+                renderOptions(q, index);
+                updateNavVisuals(); // <--- YENİ
+            };
             div.appendChild(lbl);
         });
     }
@@ -515,7 +536,7 @@ function deleteQuestions() {
 function flagQuestion() {
     const qIndex = currentQuestionIndex; // O anki soru numarası
     
-    // Daha önce itiraz ettiyse onu göster, yoksa boş gelsin
+    // Daha önce itiraz ettiyse onu kutuya getir, yoksa boş gelsin
     const eskiItiraz = userObjections[qIndex] || "";
 
     Swal.fire({
@@ -528,17 +549,23 @@ function flagQuestion() {
         confirmButtonText: 'Kaydet',
         cancelButtonText: 'İptal'
     }).then((result) => {
+        // Kullanıcı "Kaydet"e bastıysa burası çalışır
         if (result.isConfirmed) {
             const mesaj = result.value;
+            
             if (mesaj) {
+                // Mesaj yazdıysa kaydet
                 userObjections[qIndex] = mesaj;
-                Swal.fire('Kaydedildi', 'İtirazınız sınav sonunda hocaya iletilecek.', 'success');
-                updateFlagButtonColor(); // Buton rengini değiştir
+                Swal.fire('Kaydedildi', 'İtirazınız iletildi.', 'success');
             } else {
-                // Eğer boş bırakıp kaydet derse itirazı sil
+                // Mesajı sildiyse itirazı kaldır
                 delete userObjections[qIndex];
-                updateFlagButtonColor();
             }
+
+            // --- İŞTE O KODLAR BURAYA GELİYOR ---
+            // İtiraz durumuna göre hem butonu hem de üstteki topu boyuyoruz
+            updateFlagButtonColor();
+            updateNavVisuals(); 
         }
     });
 }
@@ -553,4 +580,50 @@ function updateFlagButtonColor() {
         btn.style.background = "#f59e0b"; // Turuncu
         btn.innerText = "⚠️ Bu Soruda Hata Var / İtiraz Et";
     }
+}
+// --- NAVİGASYON FONKSİYONLARI ---
+
+// 1. Sınav Başlarken Butonları Oluştur
+function createNavButtons() {
+    const container = document.getElementById('questionNav');
+    container.innerHTML = ""; // Temizle
+    
+    activeQuestions.forEach((q, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'nav-btn';
+        btn.innerText = index + 1;
+        btn.onclick = () => {
+            currentQuestionIndex = index;
+            showQuestion(index);
+        };
+        // Butona ID veriyoruz ki sonradan rengini değiştirebilelim
+        btn.id = `navBtn-${index}`;
+        container.appendChild(btn);
+    });
+}
+
+// 2. Renkleri Güncelle (Her işlemden sonra çağıracağız)
+function updateNavVisuals() {
+    activeQuestions.forEach((q, index) => {
+        const btn = document.getElementById(`navBtn-${index}`);
+        if(!btn) return;
+
+        // Önce tüm sınıfları temizle, sadece base class kalsın
+        btn.className = 'nav-btn';
+
+        // 1. Durum: İşaretlenmiş mi?
+        if (userAnswers[index] !== null && userAnswers[index] !== "") {
+            btn.classList.add('answered');
+        }
+
+        // 2. Durum: İtiraz var mı? (İşaretli olsa bile İtiraz rengi baskın çıkar)
+        if (userObjections && userObjections[index]) {
+            btn.classList.add('flagged');
+        }
+
+        // 3. Durum: Şu an bu soruda mıyız?
+        if (index === currentQuestionIndex) {
+            btn.classList.add('active');
+        }
+    });
 }
