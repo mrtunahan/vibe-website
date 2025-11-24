@@ -40,29 +40,40 @@ document.addEventListener('DOMContentLoaded', () => {
             startBtn.innerText = "Bağlantı Hatası (Sayfayı Yenile)";
         });
 
-    // 2. OTOMATİK İSİM GETİRME (Kullanıcı numarayı yazıp çıkınca çalışır)
-    studentIdInput.addEventListener('blur', async function() {
+    // 2. OTOMATİK İSİM GETİRME (Klavye hareketine duyarlı)
+    studentIdInput.addEventListener('input', async function() {
         const numara = this.value.trim();
         const nameDisplay = document.getElementById('studentNameDisplay');
 
+        // Numara 9 hane olduğunda otomatik sorgula (Tıklama gerektirmez)
         if(numara.length === 9) {
-            nameDisplay.value = "İsim aranıyor...";
+            nameDisplay.value = "Aranıyor...";
+            nameDisplay.style.color = "#4F46E5"; // Mavi renk
+
             try {
-                // Sadece isim kontrolü için hafif bir istek atıyoruz
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: "POST",
                     body: JSON.stringify({ type: "CHECK_ACCESS", Numara: numara })
                 });
+                
                 const result = await response.json();
                 
                 if(result.status === "success" && result.name) {
                     nameDisplay.value = result.name;
-                    studentName = result.name; // Global değişkeni güncelle
+                    nameDisplay.style.color = "green"; // Bulununca yeşil olsun
+                    studentName = result.name; 
                 } else {
-                    nameDisplay.value = "Kayıt bulunamadı!";
+                    nameDisplay.value = result.message || "Kayıt Bulunamadı";
+                    nameDisplay.style.color = "red";
                 }
             } catch (error) {
-                nameDisplay.value = "Bağlantı hatası!";
+                console.error(error);
+                nameDisplay.value = "Bağlantı Hatası!";
+            }
+        } else {
+            // 9 haneden azsa veya silerse kutuyu temizle
+            if(numara.length < 9) {
+                nameDisplay.value = ""; 
             }
         }
     });
