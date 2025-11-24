@@ -486,12 +486,12 @@ function finishQuiz(type) {
                 type: "HEARTBEAT",
                 Numara: studentNumber,
                 Isim: studentName,
-                Soru: currentQuestionIndex + 1,
+                Soru: "BİTTİ",
                 Kopya: "⚠️ KOPYA TESPİTİ", // Bu metin admin panelinde kırmızıyı tetikler
                 Itiraz: "-"
             })
         }).catch(err => console.log("Kopya sinyali gönderilemedi"));
-    } else if (score >= 50) {
+    } else if (score >= 60) {
         fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
         fb.style.color = "green";
     } else {
@@ -798,9 +798,31 @@ function fetchLiveTable() {
             const [num, isim, zaman, soru, kopya, itiraz] = row;
             
             // Kopya şüphesi varsa satırı kırmızı yap
-            const isSuspicious = (kopya !== "Temiz");
-            const rowStyle = isSuspicious ? "background:#fee2e2; color:#b91c1c; font-weight:bold;" : "border-bottom:1px solid #eee;";
+            // --- RENKLENDİRME MANTIĞI (GÜNCELLENDİ) ---
+            let rowStyle = "border-bottom:1px solid #eee;"; // Varsayılan (Beyaz/Gri)
+            let durumIkon = "🟢 Aktif";
+
+            if (kopya.includes("KOPYA") || kopya.includes("DİKKAT")) {
+                // KOPYA DURUMU (KIRMIZI)
+                rowStyle = "background:#fee2e2; color:#b91c1c; font-weight:bold;";
+                durumIkon = "⚠️ DİKKAT";
+            } 
+            else if (kopya.includes("TAMAMLANDI")) {
+                // BİTİRME DURUMU (YEŞİL/MAVİ)
+                rowStyle = "background:#ecfdf5; color:#047857; font-weight:bold;"; // Açık yeşil zemin, koyu yeşil yazı
+                durumIkon = "🏁 BİTTİ";
+            }
+            // -------------------------------------------
             
+            const tr = document.createElement('tr');
+            tr.style = rowStyle;
+            tr.innerHTML = `
+                <td style="padding:8px;">${num}</td>
+                <td style="padding:8px;">${isim}</td>
+                <td style="padding:8px;">${durumIkon}</td>
+                <td style="padding:8px; text-align:center;">${soru === "BİTTİ" ? "-" : soru + ". Soru"}</td>
+                <td style="padding:8px; text-align:center;">${itiraz !== "-" ? "🚩 VAR" : "-"}</td>
+            `;
             // Son aktiflik zamanına göre "Online/Offline" kararı (Basit mantık)
             // (Apps Script zamanı metin gönderdiği için burada basit ikon kullanacağız)
             
