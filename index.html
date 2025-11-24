@@ -91,12 +91,45 @@
             <button onclick="adminLoginAttempt()" class="btn-primary" style="background:#374151; margin-top:10px;">Giriş</button>
         </div>
         <div id="adminControls" class="hidden">
-            <p style="color:green; font-weight:bold;">Yönetici Girişi Başarılı ✅</p>
-            <button onclick="deleteQuestions()" style="background:#ef4444; color:white;">🗑️ Tüm Soruları Sil</button>
-            <textarea id="jsonInput" placeholder='JSON Kodunu Buraya Yapıştır...' style="width:100%; height:120px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px;"></textarea>
-            <button onclick="uploadQuestions()" style="background:#10b981; color:white;">📥 Soruları Yükle</button>
-            <p id="adminStatus" style="font-size:0.9rem; color:#666;"></p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <p style="color:green; font-weight:bold; margin:0;">✅ Yönetici Modu</p>
+        <button onclick="startAdminMonitor()" style="width:auto; padding:8px 15px; background:#4F46E5; font-size:0.9rem;">📡 Canlı İzlemeyi Başlat</button>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button onclick="showAdminTab('monitor')" class="btn-secondary" style="padding:10px;">📊 Canlı Takip</button>
+        <button onclick="showAdminTab('questions')" class="btn-secondary" style="padding:10px;">📝 Soru Yönetimi</button>
+    </div>
+
+    <div id="tab-monitor">
+        <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:10px; height:300px; overflow-y:auto;">
+            <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
+                <thead>
+                    <tr style="background:#e5e7eb; text-align:left;">
+                        <th style="padding:8px;">No</th>
+                        <th style="padding:8px;">Öğrenci</th>
+                        <th style="padding:8px;">Durum</th>
+                        <th style="padding:8px;">Soru</th>
+                        <th style="padding:8px;">İtiraz</th>
+                    </tr>
+                </thead>
+                <tbody id="liveTableBody">
+                    <tr><td colspan="5" style="text-align:center; padding:20px;">Veri bekleniyor...</td></tr>
+                </tbody>
+            </table>
         </div>
+        <div style="margin-top:10px; font-size:0.8rem; color:#666;">
+            * Liste her 10 saniyede bir yenilenir. <span style="color:red;">Kırmızı</span>: Kopya şüphesi.
+        </div>
+    </div>
+
+    <div id="tab-questions" class="hidden">
+        <button onclick="deleteQuestions()" style="background:#ef4444; color:white;">🗑️ Tüm Soruları Sil</button>
+        <textarea id="jsonInput" placeholder='JSON Kodunu Buraya Yapıştır...' style="width:100%; height:120px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px;"></textarea>
+        <button onclick="uploadQuestions()" style="background:#10b981; color:white;">📥 Soruları Yükle</button>
+        <p id="adminStatus" style="font-size:0.9rem; color:#666;"></p>
+    </div>
+</div>
         <button onclick="closeAdmin()" class="btn-secondary" style="margin-top:20px;">Kapat</button>
     </div>
 

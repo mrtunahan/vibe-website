@@ -265,6 +265,7 @@ setTimeout(() => {
 
     createNavButtons(); // <-- YENİ: Butonları oluştur
     updateNavVisuals(); // <-- YENİ: İlk durumu boya
+    startStudentHeartbeat();
 }
 
 function showQuestion(index) {
@@ -683,4 +684,101 @@ function saveProgressToLocal() {
     
     // Öğrenci numarasına özel kayıt açıyoruz ki başkasıyla karışmasın
     localStorage.setItem(`exam_progress_${studentNumber}`, JSON.stringify(dataToSave));
+}
+function startStudentHeartbeat() {
+    // Sadece sınav aktifse gönder
+    setInterval(() => {
+        if (!isExamActive || !studentNumber) return;
+
+        // İtiraz var mı kontrol et
+        const activeObjection = userObjections[currentQuestionIndex] ? "VAR" : "-";
+        
+        // Kopya durumu kontrolü (daha önce belirlenmiş bir değişken var mı?)
+        // Basitçe aktif mi değil mi onu yolluyoruz.
+        const cheatStatus = document.hidden ? "Sekme Arkada!" : "Temiz";
+
+        const payload = {
+            type: "HEARTBEAT",
+            Numara: studentNumber,
+            Isim: studentName,
+            Soru: (currentQuestionIndex + 1),
+            Kopya: cheatStatus,
+            Itiraz: activeObjection
+        };
+
+        // Arka planda sessizce gönder (await kullanma ki donmasın)
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        }).catch(e => console.log("Heartbeat fail")); // Hata olursa öğrenciye hissettirme
+
+    }, 15000); // 15 Saniyede bir güncelle
+}
+let adminMonitorInterval = null;
+
+function showAdminTab(tabName) {
+    document.getElementById('tab-monitor').classList.add('hidden');
+    document.getElementById('tab-questions').classList.add('hidden');
+    
+    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+}
+
+function startAdminMonitor() {
+    Swal.fire({
+        toast: true,
+        icon: 'info',
+        title: 'Canlı İzleme Başlatıldı',
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000
+    });
+
+    fetchLiveTable(); // İlk veriyi hemen çek
+    
+    // Varsa eski döngüyü temizle
+    if (adminMonitorInterval) clearInterval(adminMonitorInterval);
+
+    // 10 Saniyede bir tabloyu yenile
+    adminMonitorInterval = setInterval(fetchLiveTable, 10000);
+}
+
+function fetchLiveTable() {
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "GET_ADMIN_LIVE" })
+    })
+    .then(r => r.json())
+    .then(rows => {
+        const tbody = document.getElementById('liveTableBody');
+        tbody.innerHTML = ""; // Tabloyu temizle
+
+        if (rows.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:15px;'>Aktif öğrenci yok.</td></tr>";
+            return;
+        }
+
+        rows.forEach(row => {
+            // Row yapısı: [Numara, İsim, Zaman, SoruNo, Kopya, İtiraz]
+            const [num, isim, zaman, soru, kopya, itiraz] = row;
+            
+            // Kopya şüphesi varsa satırı kırmızı yap
+            const isSuspicious = (kopya !== "Temiz");
+            const rowStyle = isSuspicious ? "background:#fee2e2; color:#b91c1c; font-weight:bold;" : "border-bottom:1px solid #eee;";
+            
+            // Son aktiflik zamanına göre "Online/Offline" kararı (Basit mantık)
+            // (Apps Script zamanı metin gönderdiği için burada basit ikon kullanacağız)
+            
+            const tr = document.createElement('tr');
+            tr.style = rowStyle;
+            tr.innerHTML = `
+                <td style="padding:8px;">${num}</td>
+                <td style="padding:8px;">${isim}</td>
+                <td style="padding:8px;">${isSuspicious ? '⚠️ DİKKAT' : '🟢 Aktif'}</td>
+                <td style="padding:8px; text-align:center;">${soru}. Soru</td>
+                <td style="padding:8px; text-align:center;">${itiraz !== "-" ? "🚩 VAR" : "-"}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    })
+    .catch(err => console.error("Admin Monitor Error:", err));
 }
