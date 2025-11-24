@@ -213,7 +213,36 @@ function initializeQuiz() {
         };
     });
 
+    const savedData = localStorage.getItem(`exam_progress_${studentNumber}`);
+if (savedData) {
+    const parsed = JSON.parse(savedData);
+    // Eğer soru sayısı değişmediyse eski cevapları yükle
+    if (parsed.answers && parsed.answers.length === activeQuestions.length) {
+        userAnswers = parsed.answers;
+        Swal.fire({
+            icon: 'info',
+            title: 'Kaldığınız Yerden Devam',
+            text: 'Önceki oturumunuzdan cevaplarınız yüklendi.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    } else {
+        userAnswers = new Array(activeQuestions.length).fill(null);
+    }
+    
+    // İtirazları da geri yükle
+    if(parsed.objections) {
+        userObjections = parsed.objections;
+    }
+} else {
     userAnswers = new Array(activeQuestions.length).fill(null);
+}
+
+// Navigasyon butonlarını ve görselleri hemen güncelle
+setTimeout(() => {
+    createNavButtons();
+    updateNavVisuals();
+}, 100);
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
     document.getElementById('displayName').innerText = studentName;
@@ -272,7 +301,7 @@ function renderOptions(q, index) {
     // 1. Durum: Klasik Yazılı Cevap (Text)
     if (q.type === 'text') {
         // BURAYA EKLENDİ: oninput içine updateNavVisuals() koyduk
-        div.innerHTML = `<textarea class="text-answer-input" rows="3" oninput="userAnswers[${index}]=this.value.trim(); updateNavVisuals()">${currentAns||''}</textarea>`;
+        div.innerHTML = `<textarea class="text-answer-input" rows="3" oninput="userAnswers[${index}]=this.value.trim(); updateNavVisuals(); saveProgressToLocal()">${currentAns||''}</textarea>`;
     
     // 2. Durum: Çoklu Seçim (Checkbox)
     } else if (q.type === 'checkbox') {
@@ -289,10 +318,11 @@ function renderOptions(q, index) {
             
             // BURAYA EKLENDİ: Checkbox değişince nav güncellensin
             lbl.querySelector('input').onchange = (e) => {
-                if(e.target.checked) sel.push(i); else sel = sel.filter(x=>x!==i);
-                userAnswers[index] = JSON.stringify(sel);
-                renderOptions(q, index); 
-                updateNavVisuals(); // <--- YENİ
+            if(e.target.checked) sel.push(i); else sel = sel.filter(x=>x!==i);
+            userAnswers[index] = JSON.stringify(sel);
+            renderOptions(q, index); 
+            updateNavVisuals();
+            saveProgressToLocal(); // <--- EKLENDİ
             };
             div.appendChild(lbl);
         });
@@ -307,10 +337,11 @@ function renderOptions(q, index) {
             
             // BURAYA EKLENDİ: Şıkkı seçince nav güncellensin
             lbl.onclick = () => { 
-                userAnswers[index] = i.toString(); 
-                renderOptions(q, index);
-                updateNavVisuals(); // <--- YENİ
-            };
+            userAnswers[index] = i.toString(); 
+            renderOptions(q, index);
+            updateNavVisuals();
+            saveProgressToLocal(); // <--- EKLENDİ
+              };
             div.appendChild(lbl);
         });
     }
@@ -567,6 +598,7 @@ function flagQuestion() {
             // İtiraz durumuna göre hem butonu hem de üstteki topu boyuyoruz
             updateFlagButtonColor();
             updateNavVisuals(); 
+            saveProgressToLocal();
         }
     });
 }
@@ -627,4 +659,16 @@ function updateNavVisuals() {
             btn.classList.add('active');
         }
     });
+}
+function saveProgressToLocal() {
+    if (!isExamActive || !studentNumber) return;
+
+    const dataToSave = {
+        answers: userAnswers,
+        objections: userObjections,
+        timestamp: new Date().getTime()
+    };
+    
+    // Öğrenci numarasına özel kayıt açıyoruz ki başkasıyla karışmasın
+    localStorage.setItem(`exam_progress_${studentNumber}`, JSON.stringify(dataToSave));
 }
