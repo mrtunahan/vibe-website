@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const studentIdInput = document.getElementById('studentId');
     
     // 1. SORULARI ÇEK
-    fetch(GOOGLE_SCRIPT_URL)
+    fetch(GOOGLE_SCRIPT_URL + "?v=" + new Date().getTime()) 
         .then(r => r.json())
         .then(data => {
             if (Array.isArray(data)) questionsSource = data;
