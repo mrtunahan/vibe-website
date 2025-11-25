@@ -1091,24 +1091,22 @@ function selectRole(role) {
     const loginScreen = document.getElementById('loginScreen');
     const adminPanel = document.getElementById('adminPanel');
 
-    // Animasyonla kaybolma efekti (Opsiyonel, şık durur)
+    // Yumuşak geçiş efekti
     landing.style.opacity = '0';
-    landing.style.transition = 'opacity 0.5s ease';
+    landing.style.transition = 'opacity 0.4s ease';
 
     setTimeout(() => {
-        landing.classList.add('hidden'); // Landing'i tamamen gizle
+        landing.classList.add('hidden'); // Landing sayfasını tamamen kaldır
         
         if (role === 'student') {
-            // Öğrenci ise normal giriş ekranını aç
+            // Öğrenci seçildiyse Numara Girme Ekranını aç
             loginScreen.classList.remove('hidden');
         } else if (role === 'teacher') {
-            // Öğretmen ise admin panelini aç
+            // Öğretmen seçildiyse Admin Girişini aç
+            // Önce adminPanel'i görünür yap, sonra login kısmını göster
             adminPanel.classList.remove('hidden');
-            
-            // Eğer daha önce yaptığımız özel admin tasarımı varsa:
-            // adminPanel içindeki 'hidden' classlarını da yönetmek gerekebilir
-            // ama temel olarak adminPanel div'ini açmak yeterlidir.
-            document.getElementById('adminLogin').classList.remove('hidden'); // Şifre ekranını emin olmak için aç
+            document.getElementById('adminLogin').classList.remove('hidden');
+            document.getElementById('adminControls').classList.add('hidden');
         }
-    }, 500); // 0.5 saniye bekle (css transition süresi)
+    }, 400); // 0.4 sn bekle
 }

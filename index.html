@@ -16,18 +16,20 @@
         <div class="landing-left">
             <div class="landing-header">
                 <img src="https://krtknadmn.karatekin.edu.tr/files/karatekin/odul.png" alt="ÇAKÜ Logo">
-                <span>ÇAKÜ</span>
+                <span class="brand-name">ÇAKÜ</span>
             </div>
             
             <div class="landing-titles">
-                <h1>Online Quiz Sistemi</h1>
-                <h3>Kullanıcı Girişi</h3>
-                <p>Lütfen aşağıdan sisteme giriş yapınız.</p>
+                <h1 class="main-title">Online Quiz Sistemi</h1>
+                <h3 class="sub-title">Kullanıcı Girişi</h3>
+                <p class="desc-text">Lütfen aşağıdan sisteme giriş yapınız.</p>
             </div>
 
             <div class="role-grid">
-                <div class="role-card student-card" onclick="selectRole('student')">
-                    <div class="role-icon">🎓</div>
+                <div class="role-card" onclick="selectRole('student')">
+                    <div class="role-icon-box">
+                        <span class="role-icon">🎓</span>
+                    </div>
                     <div class="role-text">
                         <strong>Öğrenci Girişi</strong>
                         <span>Sınav olmak için tıklayın</span>
@@ -35,8 +37,10 @@
                     <div class="arrow-icon">➜</div>
                 </div>
 
-                <div class="role-card teacher-card" onclick="selectRole('teacher')">
-                    <div class="role-icon">👨‍🏫</div>
+                <div class="role-card" onclick="selectRole('teacher')">
+                    <div class="role-icon-box">
+                        <span class="role-icon">👨‍🏫</span>
+                    </div>
                     <div class="role-text">
                         <strong>Öğretmen Girişi</strong>
                         <span>Yönetici paneli için tıklayın</span>
@@ -47,9 +51,8 @@
         </div>
 
         <div class="landing-right">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTaeDEWNE-bntxhVGP8p2Tp0KM3l53hioFYxNJdOlVGLYEsOTi-CGAg4GZy6X0cF0z2Tig&usqp=CAU" alt="Login Visual">
-            <div class="overlay-text">
-                <h2>Başarıya Giden Yol</h2>
+            <div class="overlay-content">
+                <h2>Başarıya<br>Giden Yol</h2>
                 <p>Bilgini test et, kendini geliştir.</p>
             </div>
         </div>
@@ -57,10 +60,8 @@
 </div>
 
     <div class="container hidden" id="loginScreen">
-    
-    <div style="position: absolute; top: 20px; left: 20px; cursor: pointer; color: #9ca3af;" 
-         onclick="location.reload()">
-         ← Geri Dön
+    <div onclick="location.reload()" style="position:absolute; top:20px; left:20px; cursor:pointer; color:#999; font-size:0.9rem;">
+        ← Geri Dön
     </div>
 
     
