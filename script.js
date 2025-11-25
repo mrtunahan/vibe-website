@@ -1085,3 +1085,30 @@ function switchTool(index, mode, btn) {
         }
     }
 }
+// --- KARŞILAMA EKRANI YÖNETİMİ ---
+function selectRole(role) {
+    const landing = document.getElementById('landingPage');
+    const loginScreen = document.getElementById('loginScreen');
+    const adminPanel = document.getElementById('adminPanel');
+
+    // Animasyonla kaybolma efekti (Opsiyonel, şık durur)
+    landing.style.opacity = '0';
+    landing.style.transition = 'opacity 0.5s ease';
+
+    setTimeout(() => {
+        landing.classList.add('hidden'); // Landing'i tamamen gizle
+        
+        if (role === 'student') {
+            // Öğrenci ise normal giriş ekranını aç
+            loginScreen.classList.remove('hidden');
+        } else if (role === 'teacher') {
+            // Öğretmen ise admin panelini aç
+            adminPanel.classList.remove('hidden');
+            
+            // Eğer daha önce yaptığımız özel admin tasarımı varsa:
+            // adminPanel içindeki 'hidden' classlarını da yönetmek gerekebilir
+            // ama temel olarak adminPanel div'ini açmak yeterlidir.
+            document.getElementById('adminLogin').classList.remove('hidden'); // Şifre ekranını emin olmak için aç
+        }
+    }, 500); // 0.5 saniye bekle (css transition süresi)
+}

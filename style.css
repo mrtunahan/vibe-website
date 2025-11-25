@@ -393,3 +393,111 @@ body.dark-mode .tool-btn.active {
     border-color: #6366f1;
     color: #fff;
 }
+/* === LANDING PAGE (KARŞILAMA EKRANI) TASARIMI === */
+.landing-wrapper {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #f3f4f6; /* Açık gri zemin */
+    z-index: 9999; /* Her şeyin üstünde */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.landing-container {
+    background: #fff;
+    width: 1000px;
+    max-width: 100%;
+    height: 600px;
+    max-height: 90vh;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    display: flex;
+    overflow: hidden;
+}
+
+/* --- SOL TARAF --- */
+.landing-left {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.landing-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+.landing-header img { width: 50px; height: 50px; object-fit: contain; }
+.landing-header span { font-size: 1.5rem; font-weight: 800; color: #1f2937; letter-spacing: 1px; }
+
+.landing-titles h1 { font-size: 2rem; color: #4F46E5; margin-bottom: 5px; }
+.landing-titles h3 { font-size: 1.5rem; color: #111827; margin: 0 0 10px 0; font-weight: 600; }
+.landing-titles p { color: #6b7280; margin-bottom: 40px; }
+
+/* Seçim Kartları */
+.role-grid { display: flex; flex-direction: column; gap: 15px; }
+
+.role-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+}
+
+.role-card:hover {
+    border-color: #4F46E5;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.1);
+}
+
+.role-icon { font-size: 2rem; margin-right: 20px; background: #f9fafb; padding: 10px; border-radius: 12px; }
+.role-text { flex: 1; text-align: left; }
+.role-text strong { display: block; font-size: 1.1rem; color: #1f2937; }
+.role-text span { font-size: 0.85rem; color: #9ca3af; }
+.arrow-icon { color: #d1d5db; font-weight: bold; transition: 0.3s; }
+.role-card:hover .arrow-icon { color: #4F46E5; transform: translateX(5px); }
+
+/* --- SAĞ TARAF (GÖRSEL) --- */
+.landing-right {
+    flex: 1;
+    background: #eef2ff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.landing-right img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Resmi alanı kaplayacak şekilde keser */
+}
+
+/* Mobil Uyumluluk */
+@media (max-width: 768px) {
+    .landing-container { flex-direction: column; height: auto; }
+    .landing-right { display: none; /* Mobilde resmi gizle, sade olsun */ }
+    .landing-left { padding: 30px; }
+}
+
+/* Dark Mode Uyumu */
+body.dark-mode .landing-wrapper { background: #111827; }
+body.dark-mode .landing-container { background: #1f2937; }
+body.dark-mode .landing-header span, 
+body.dark-mode .landing-titles h3,
+body.dark-mode .role-text strong { color: #fff; }
+body.dark-mode .role-card { background: #374151; border-color: #4b5563; }
+body.dark-mode .role-icon { background: #4b5563; }
+body.dark-mode .role-card:hover { border-color: #818cf8; }
