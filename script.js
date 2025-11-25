@@ -163,10 +163,10 @@ async function startQuizAttempt() {
             // Tam ekrana geçmeyi dene
             try { await openFullscreen(); } catch (e) { console.log("Tam ekran reddedildi"); }
 
-            // Sınavı başlat
+            // Bekleme odasına al
             setTimeout(() => {
                 hasAttemptedFullscreen = true;
-                initializeQuiz();
+                waitForTeacher(); // <--- YENİ FONKSİYON
             }, 500);
             
             // Başarılı olursa butonu resetlemeye gerek yok, ekran değişecek
@@ -744,25 +744,35 @@ function saveProgressToLocal() {
     // Öğrenci numarasına özel kayıt açıyoruz ki başkasıyla karışmasın
     localStorage.setItem(`exam_progress_${studentNumber}`, JSON.stringify(dataToSave));
 }
-function startStudentHeartbeat() {
-    // Eğer daha önce başlamışsa temizle (üst üste binmesin)
+function startStudentHeartbeat(isWaiting = false) {
     if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
 
-    // Döngüyü değişkene ata
     studentHeartbeatInterval = setInterval(() => {
-        // Sınav aktif değilse veya numara yoksa dur
-        if (!isExamActive || !studentNumber) return;
+        // Numara yoksa dur
+        if (!studentNumber) return;
 
-        const activeObjection = userObjections[currentQuestionIndex] ? "VAR" : "-";
-        const cheatStatus = document.hidden ? "Sekme Arkada!" : "Temiz";
+        // Durum Belirleme
+        let cheatStatus = "Temiz";
+        let soruDurumu = isWaiting ? "⏳ Bekliyor" : (currentQuestionIndex + 1);
+
+        if (!isWaiting) {
+            // Sınavdaysa kopya kontrolü yap
+            if (!isExamActive) return; // Sınav bitmişse gönderme
+            cheatStatus = document.hidden ? "Sekme Arkada!" : "Temiz";
+        } else {
+            // Bekleme odasındaysa
+            cheatStatus = "Hazır"; 
+        }
+
+        const activeObjection = (userObjections && userObjections[currentQuestionIndex]) ? "VAR" : "-";
 
         const payload = {
             type: "HEARTBEAT",
             Numara: studentNumber,
             Isim: studentName,
-            Soru: (currentQuestionIndex + 1),
+            Soru: soruDurumu,
             Kopya: cheatStatus,
-            Itiraz: activeObjection
+            Itiraz: isWaiting ? "-" : activeObjection
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
@@ -770,7 +780,7 @@ function startStudentHeartbeat() {
             body: JSON.stringify(payload)
         }).catch(e => console.log("Heartbeat fail"));
 
-    }, 15000); // 15 Saniyede bir
+    }, isWaiting ? 5000 : 15000); // Beklerken 5sn, sınavda 15sn
 }
 let adminMonitorInterval = null;
 
@@ -852,4 +862,63 @@ function fetchLiveTable() {
         });
     })
     .catch(err => console.error("Admin Monitor Error:", err));
+}
+// --- Sınav Başlatma Kontrolü ---
+
+let pollInterval = null;
+
+function waitForTeacher() {
+    // Ekranları değiştir
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('waitingScreen').classList.remove('hidden');
+    document.getElementById('waitName').innerText = studentName;
+
+    // 1. Kalp atışını "Bekliyor" moduyla başlat (Hoca görsün)
+    startStudentHeartbeat(true); 
+
+    // 2. Sürekli sunucuyu kontrol et (Sınav başladı mı?)
+    pollInterval = setInterval(checkExamStatus, 3000); // 3 saniyede bir sor
+}
+
+function checkExamStatus() {
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "CHECK_EXAM_STATUS" })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.status === "STARTED") {
+            // Sınav Başladı!
+            clearInterval(pollInterval); // Sormayı bırak
+            document.getElementById('waitingScreen').classList.add('hidden');
+            
+            // Sınavı gerçekten başlat
+            // startStudentHeartbeat'i sınav moduna geçirmek için kapatıp açıyoruz
+            if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
+            
+            initializeQuiz(); // Sınav ekranını kur
+        }
+    })
+    .catch(e => console.log("Status check fail"));
+}
+
+// Hoca Paneli Fonksiyonu
+function toggleGlobalExam(status) {
+    const btn = document.getElementById('globalStartBtn');
+    const msg = status === 'STARTED' ? "Sınav BAŞLATILDI. Öğrenciler içeri alınıyor..." : "Sınav DURDURULDU. Yeni giriş yapılamaz.";
+    
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "SET_EXAM_STATUS", status: status })
+    })
+    .then(() => {
+        Swal.fire({
+            toast: true,
+            icon: status === 'STARTED' ? 'success' : 'warning',
+            title: msg,
+            timer: 3000,
+            showConfirmButton: false
+        });
+        if(status === 'STARTED') btn.style.opacity = "0.5";
+    });
 }

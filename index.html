@@ -35,6 +35,19 @@
     
     <button id="startBtn" class="btn-primary animate-entry delay-4" onclick="startQuizAttempt()">Giriş Yap ve Başlat</button>
 </div>
+    <div class="container hidden" id="waitingScreen">
+        <div class="uni-logo" style="margin: 0 auto 20px auto; width: 80px; height: 80px;">
+            <img src="https://websitem.karatekin.edu.tr/user_files/ahmettunahankorkmaz/profil_pic/21102024101020970.jpg" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+        </div>
+        <h2>⏳ Sınav Bekleniyor...</h2>
+        <p>Lütfen bekleyiniz. Sınav eğitmen onayı ile başlayacaktır.</p>
+        <div class="warning-box" style="text-align:center;">
+            <strong>Adınız:</strong> <span id="waitName" style="color:#4F46E5; font-weight:bold;">...</span><br>
+            <span style="font-size:0.8rem; color:green;">● Bağlantı Kuruldu. Hoca panelinde görünüyorsunuz.</span>
+        </div>
+        <div class="loader" style="margin: 20px auto; border: 5px solid #f3f3f3; border-top: 5px solid #4F46E5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+        <style>@keyframes spin {0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }}</style>
+    </div>
     <div class="container hidden" id="quizScreen">
         <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
         <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
@@ -95,6 +108,8 @@
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <p style="color:green; font-weight:bold; margin:0;">✅ Yönetici Modu</p>
         <button onclick="startAdminMonitor()" style="width:auto; padding:8px 15px; background:#4F46E5; font-size:0.9rem;">📡 Canlı İzlemeyi Başlat</button>
+        <button onclick="toggleGlobalExam('STARTED')" id="globalStartBtn" style="width:auto; padding:8px 15px; background:#059669; font-size:0.9rem; margin-left:10px;">🚀 Sınavı BAŞLAT</button>
+        <button onclick="toggleGlobalExam('WAITING')" style="width:auto; padding:8px 15px; background:#b91c1c; font-size:0.9rem; margin-left:5px;">⛔ DURDUR</button>
     </div>
 
     <div style="display:flex; gap:10px; margin-bottom:15px;">
