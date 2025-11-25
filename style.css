@@ -393,3 +393,71 @@ body.dark-mode .tool-btn.active {
     border-color: #6366f1;
     color: #fff;
 }
+/* --- YÖNETİCİ KAPISI TASARIMI --- */
+.admin-gate {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.1); /* Yarı saydam */
+    backdrop-filter: blur(10px);          /* Buzlu cam efekti */
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 12px;
+    border-radius: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 40px; /* Başlangıçta sadece ikon görünsün */
+    white-space: nowrap;
+}
+
+.admin-gate:hover {
+    width: 140px; /* Üzerine gelince açılsın */
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.2); /* Morumsu gölge */
+    border-color: rgba(79, 70, 229, 0.3);
+}
+
+.gate-icon {
+    font-size: 1.2rem;
+    filter: grayscale(100%);
+    transition: 0.3s;
+}
+
+.admin-gate:hover .gate-icon {
+    filter: grayscale(0%);
+    transform: scale(1.1);
+}
+
+.gate-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4b5563;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+}
+
+.admin-gate:hover .gate-text {
+    opacity: 1;
+    transform: translateX(0);
+    color: #4F46E5; /* Hoverda yazı rengi */
+}
+
+/* DARK MODE UYUMU */
+body.dark-mode .admin-gate {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-mode .admin-gate:hover {
+    background: rgba(79, 70, 229, 0.2);
+    border-color: rgba(79, 70, 229, 0.4);
+}
+body.dark-mode .gate-text {
+    color: #e5e7eb;
+}
