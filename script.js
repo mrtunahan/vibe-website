@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuJ1PChIfq59qsu3dlxfiZEpeeMJ_BG1i6vek4V7bn39tDekpusMtWiA_BRby5Pr2i/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzPm6cTBBzU-NPHYOl7vXoJx6xA0H5lzF_2vwtOLKvFDmT-qjZFIl1efNI6SvW3fIzu/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -902,23 +902,35 @@ function checkExamStatus() {
     .catch(e => console.log("Status check fail"));
 }
 
-// Hoca Paneli Fonksiyonu
+
+// Hoca Paneli Buton Fonksiyonu
 function toggleGlobalExam(status) {
-    const btn = document.getElementById('globalStartBtn');
-    const msg = status === 'STARTED' ? "Sınav BAŞLATILDI. Öğrenciler içeri alınıyor..." : "Sınav DURDURULDU. Yeni giriş yapılamaz.";
+    const btnStart = document.getElementById('globalStartBtn');
     
+    // Kullanıcıya bilgi ver
+    const msg = status === 'STARTED' ? "Sınav BAŞLATILIYOR..." : "Sınav DURDURULUYOR...";
+    Swal.fire({
+        toast: true, icon: 'info', title: msg, timer: 1500, showConfirmButton: false
+    });
+
     fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify({ type: "SET_EXAM_STATUS", status: status })
     })
-    .then(() => {
-        Swal.fire({
-            toast: true,
-            icon: status === 'STARTED' ? 'success' : 'warning',
-            title: msg,
-            timer: 3000,
-            showConfirmButton: false
-        });
-        if(status === 'STARTED') btn.style.opacity = "0.5";
+    .then(r => r.json())
+    .then(data => {
+        if(data.status === 'success') {
+            Swal.fire({
+                toast: true,
+                icon: status === 'STARTED' ? 'success' : 'warning',
+                title: status === 'STARTED' ? "Sınav Başladı! 🚀" : "Sınav Durduruldu ⛔",
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }
+    })
+    .catch(e => {
+        console.error(e);
+        Swal.fire('Hata', 'Sunucuyla iletişim kurulamadı.', 'error');
     });
 }
