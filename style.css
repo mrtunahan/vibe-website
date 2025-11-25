@@ -285,3 +285,101 @@ textarea, input {
 .score-pop-animation {
     animation: popIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); /* Yaylanma efekti */
 }
+/* --- ARAÇ ÇUBUĞU (SIDEBAR TOOLS) --- */
+.tools-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.tool-btn {
+    flex: 1;
+    padding: 12px;
+    background: #f3f4f6;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.tool-btn:hover { background: #e5e7eb; }
+.tool-btn.active {
+    background: #eef2ff;
+    border-color: #4F46E5;
+    color: #4F46E5;
+}
+
+/* KOD EDİTÖRÜ TASARIMI */
+.code-editor-wrapper {
+    background: #1e1e1e; /* VS Code Grisi */
+    border-radius: 8px;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    border: 1px solid #333;
+}
+.code-header {
+    color: #ccc;
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+.code-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #d4d4d4; /* Kod rengi */
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* ÇİZİM ALANI (CANVAS) TASARIMI */
+.canvas-wrapper {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    background: #fff;
+    position: relative;
+    touch-action: none; /* Mobilde kaydırmayı engelle */
+    cursor: crosshair;
+}
+.canvas-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+}
+.canvas-btn {
+    background: white;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* DARK MODE UYUMU */
+body.dark-mode .tool-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+body.dark-mode .tool-btn.active {
+    background: #312e81; /* Koyu Mavi */
+    border-color: #6366f1;
+    color: #fff;
+}
+body.dark-mode .canvas-wrapper {
+    background: #fff; /* Canvas hep beyaz kalmalı ki çizim görünsün */
+    border-color: #4b5563;
+}

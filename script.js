@@ -312,28 +312,64 @@ function renderOptions(q, index) {
     div.innerHTML = "";
     const currentAns = userAnswers[index];
 
-    // 1. Durum: Klasik Yazılı Cevap (Text)
+    // ============================================================
+    // 👇 BURASI DEĞİŞTİ (Senin verdiğin yeni kod bloğu) 👇
+    // ============================================================
+    
+    // 1. Durum: Klasik Yazılı Cevap (GELİŞMİŞ MOD: TEXT | DRAW | CODE)
     if (q.type === 'text') {
         const val = currentAns || '';
+        let initialMode = 'text';
+        
+        // Eğer daha önce çizim yapılmışsa modu 'draw' yap
+        if(val.startsWith('[DRAW]')) initialMode = 'draw';
+        
         div.innerHTML = `
-            <div style="position:relative;">
-                <textarea 
+            <div class="tools-container">
+                <div class="tool-btn ${initialMode==='text'?'active':''}" onclick="switchTool(${index}, 'text', this)">📝 Metin</div>
+                <div class="tool-btn ${initialMode==='draw'?'active':''}" onclick="switchTool(${index}, 'draw', this)">🎨 Çizim</div>
+                <div class="tool-btn ${initialMode==='code'?'active':''}" onclick="switchTool(${index}, 'code', this)">💻 Kod</div>
+            </div>
+
+            <div id="box-text-${index}" class="${initialMode==='text'?'':'hidden'}">
+                 <textarea 
                     class="text-answer-input" 
-                    rows="4" 
-                    maxlength="500"
+                    rows="8" 
                     placeholder="Cevabınızı buraya yazınız..."
-                    oninput="
-                        this.nextElementSibling.innerText = this.value.length + '/500';
-                        userAnswers[${index}]=this.value.trim(); 
-                        updateNavVisuals(); 
-                        saveProgressToLocal()
-                    ">${val}</textarea>
-                <span style="position:absolute; bottom:10px; right:10px; font-size:0.8rem; color:#9ca3af;">
-                    ${val.length}/500
-                </span>
-            </div>`;
+                    oninput="userAnswers[${index}]=this.value; updateNavVisuals(); saveProgressToLocal()"
+                >${val.startsWith('[DRAW]') ? '' : val}</textarea>
+            </div>
+
+            <div id="box-draw-${index}" class="canvas-wrapper ${initialMode==='draw'?'':'hidden'}">
+                <canvas id="canvas-${index}" style="width:100%; height:300px;"></canvas>
+                <div class="canvas-toolbar">
+                    <button class="canvas-btn" onclick="clearCanvas('canvas-${index}', ${index})">🗑️ Temizle</button>
+                </div>
+            </div>
+
+            <div id="box-code-${index}" class="code-editor-wrapper ${initialMode==='code'?'':'hidden'}">
+                <div class="code-header"><span>main.js</span> <span>JavaScript</span></div>
+                <textarea 
+                    class="code-input" 
+                    rows="10" 
+                    spellcheck="false"
+                    placeholder="// Kodunuzu buraya yazın..."
+                    oninput="userAnswers[${index}]=this.value; updateNavVisuals(); saveProgressToLocal()"
+                    onkeydown="if(event.key==='Tab'){event.preventDefault();this.setRangeText('    ',this.selectionStart,this.selectionStart,'end')}"
+                >${val.startsWith('[DRAW]') ? '' : val}</textarea>
+            </div>
+        `;
+
+        // Eğer başlangıç modu çizim ise canvas'ı hemen başlat
+        if(initialMode === 'draw') {
+             setTimeout(() => initCanvas(`canvas-${index}`, index), 100);
+        }
     
-    // 2. Durum: Çoklu Seçim (Checkbox)
+    // ============================================================
+    // 👆 YENİ KOD BİTİŞİ 👆
+    // ============================================================
+
+    // 2. Durum: Çoklu Seçim (Checkbox) - (ESKİSİ GİBİ KALSIN)
     } else if (q.type === 'checkbox') {
         let sel = currentAns ? JSON.parse(currentAns) : [];
         q.options.forEach((opt, i) => {
@@ -346,18 +382,17 @@ function renderOptions(q, index) {
                 if(e.target.tagName!=='INPUT') lbl.querySelector('input').click();
             };
             
-            // BURAYA EKLENDİ: Checkbox değişince nav güncellensin
             lbl.querySelector('input').onchange = (e) => {
             if(e.target.checked) sel.push(i); else sel = sel.filter(x=>x!==i);
             userAnswers[index] = JSON.stringify(sel);
             renderOptions(q, index); 
             updateNavVisuals();
-            saveProgressToLocal(); // <--- EKLENDİ
+            saveProgressToLocal();
             };
             div.appendChild(lbl);
         });
 
-    // 3. Durum: Tekli Seçim (Radio - Varsayılan)
+    // 3. Durum: Tekli Seçim (Radio) - (ESKİSİ GİBİ KALSIN)
     } else { 
         q.options.forEach((opt, i) => {
             const isChk = (currentAns !== null && parseInt(currentAns) === i);
@@ -365,12 +400,11 @@ function renderOptions(q, index) {
             if(isChk) lbl.className='selected';
             lbl.innerHTML = `<input type="radio" name="opt${index}" ${isChk?'checked':''}><span>${opt}</span>`;
             
-            // BURAYA EKLENDİ: Şıkkı seçince nav güncellensin
             lbl.onclick = () => { 
             userAnswers[index] = i.toString(); 
             renderOptions(q, index);
             updateNavVisuals();
-            saveProgressToLocal(); // <--- EKLENDİ
+            saveProgressToLocal(); 
               };
             div.appendChild(lbl);
         });
@@ -933,4 +967,121 @@ function toggleGlobalExam(status) {
         console.error(e);
         Swal.fire('Hata', 'Sunucuyla iletişim kurulamadı.', 'error');
     });
+}
+// --- ÇİZİM (CANVAS) ALTYAPISI ---
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+
+function initCanvas(canvasId, index) {
+    const canvas = document.getElementById(canvasId);
+    if(!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Canvas Boyutunu Ayarla
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = 300; // Yükseklik sabit
+    
+    // Kalem Ayarları
+    ctx.strokeStyle = '#000';
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 2;
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault(); // Sayfa kaymasını engelle
+        
+        let clientX, clientY;
+        if(e.type.includes('touch')) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        [lastX, lastY] = [x, y];
+    }
+
+    // Event Listeners (Mouse & Touch)
+    canvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
+    });
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', () => { isDrawing = false; saveCanvas(index, canvas); });
+    canvas.addEventListener('mouseout', () => isDrawing = false);
+
+    // Mobil Uyumluluk
+    canvas.addEventListener('touchstart', (e) => {
+        isDrawing = true;
+        const rect = canvas.getBoundingClientRect();
+        [lastX, lastY] = [e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top];
+    }, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    canvas.addEventListener('touchend', () => { isDrawing = false; saveCanvas(index, canvas); });
+}
+
+function clearCanvas(id, index) {
+    const canvas = document.getElementById(id);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    userAnswers[index] = ""; // Veriyi temizle
+    saveProgressToLocal();
+    updateNavVisuals();
+}
+
+function saveCanvas(index, canvas) {
+    // Çizimi Resim (Base64) formatında kaydet
+    // Başına [DRAW] etiketi koyuyoruz ki raporlarken resim olduğunu anlayalım
+    userAnswers[index] = "[DRAW]" + canvas.toDataURL(); 
+    saveProgressToLocal();
+    updateNavVisuals();
+}
+// Araçlar Arası Geçiş (Text <-> Draw <-> Code)
+function switchTool(index, mode, btn) {
+    // 1. Butonların aktifliğini değiştir
+    const container = btn.parentElement;
+    Array.from(container.children).forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+
+    // 2. Kutuları gizle/göster
+    document.getElementById(`box-text-${index}`).classList.add('hidden');
+    document.getElementById(`box-draw-${index}`).classList.add('hidden');
+    document.getElementById(`box-code-${index}`).classList.add('hidden');
+
+    const targetBox = document.getElementById(`box-${mode}-${index}`);
+    targetBox.classList.remove('hidden');
+
+    // 3. Özel Durumlar
+    if (mode === 'draw') {
+        // Canvas'ı başlat (Gecikmeli başlat ki boyutu doğru algılasın)
+        setTimeout(() => initCanvas(`canvas-${index}`, index), 50);
+        
+        // Eğer metin varsa ve çizime geçildiyse uyarı verilebilir
+        // Şimdilik çizim moduna geçince veriyi sıfırlıyoruz veya kullanıcı çizince sıfırlanır
+    } else {
+        // Text veya Code moduna geçince, eğer cevap [DRAW] ise temizle
+        if (userAnswers[index] && userAnswers[index].startsWith('[DRAW]')) {
+             userAnswers[index] = ""; // Çizimden metne dönünce sıfırla
+        }
+        // İlgili kutudaki değeri userAnswers'a ata (Eski metni geri getirmiyoruz, basit tutuyoruz)
+        const input = targetBox.querySelector('textarea');
+        if(input) {
+            userAnswers[index] = input.value;
+            saveProgressToLocal();
+        }
+    }
 }
