@@ -316,12 +316,13 @@ function renderOptions(q, index) {
     // 👇 BURASI DEĞİŞTİ (Senin verdiğin yeni kod bloğu) 👇
     // ============================================================
     
+    
     // 1. Durum: Klasik Yazılı Cevap (GELİŞMİŞ MOD: TEXT | DRAW | CODE)
     if (q.type === 'text') {
         const val = currentAns || '';
         let initialMode = 'text';
         
-        // Eğer daha önce çizim yapılmışsa modu 'draw' yap
+        // Eğer cevap [DRAW] ile başlıyorsa çizim modunu aç
         if(val.startsWith('[DRAW]')) initialMode = 'draw';
         
         div.innerHTML = `
@@ -360,10 +361,11 @@ function renderOptions(q, index) {
             </div>
         `;
 
-        // Eğer başlangıç modu çizim ise canvas'ı hemen başlat
+        // Eğer kayıtlı cevap çizim ise canvas'ı hemen başlat
         if(initialMode === 'draw') {
              setTimeout(() => initCanvas(`canvas-${index}`, index), 100);
         }
+    }
     
     // ============================================================
     // 👆 YENİ KOD BİTİŞİ 👆
