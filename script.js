@@ -622,10 +622,7 @@ function sendToGoogleSheets(data) {
 }
 
 // --- YÖNETİCİ FONKSİYONLARI ---
-function toggleAdmin() {
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('adminPanel').classList.remove('hidden');
-}
+
 
 function closeAdmin() {
     document.getElementById('adminPanel').classList.add('hidden');
