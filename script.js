@@ -624,9 +624,10 @@ function sendToGoogleSheets(data) {
 // --- YÖNETİCİ FONKSİYONLARI ---
 
 
+
 function closeAdmin() {
-    document.getElementById('adminPanel').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
+    
+    location.reload(); 
 }
 
 function adminLoginAttempt() {
