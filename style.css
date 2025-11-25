@@ -1,19 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* style.css EN BAŞI (Mevcut :root ve body'i silip bunu yapıştır) */
+/* style.css EN BAŞI (Mevcut :root ve body yerine bunu kullan) */
 :root {
-    --primary: #4F46E5;
-    --primary-hover: #4338ca;
+    --primary: #6366f1; /* Daha yumuşak bir indigo */
+    --primary-hover: #4f46e5;
     
-    /* YENİ ARKA PLAN (BuzzFeed Tarzı Renkli Geçiş) */
-    --bg-gradient: linear-gradient(135deg, #00c6ff, #0072ff, #f093fb, #f5576c, #4fa49a, #4361ee);
+    /* ZEMİN RENKLERİ (Mat ve Derin) */
+    --bg-color: #0f172a; /* Çok koyu lacivert (Slate 900) */
     
-    /* QUIZ DESENİ (Saydam SVG) */
-    --bg-pattern: url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M25 10a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM10 40a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM40 60a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM70 20a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM85 80a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2z"/%3E%3Cpath d="M60 10l-5 5 5 5 5-5-5-5zM20 70l-5 5 5 5 5-5-5-5zM90 40l-5 5 5 5 5-5-5-5z"/%3E%3Cpath d="M45 30a5 5 0 1 0 10 0 5 5 0 1 0-10 0zM15 90a5 5 0 1 0 10 0 5 5 0 1 0-10 0zM80 55a5 5 0 1 0 10 0 5 5 0 1 0-10 0z"/%3E%3Ctext x="35" y="85" font-family="Arial" font-size="10" font-weight="bold"%3E?%3C/text%3E%3Ctext x="65" y="45" font-family="Arial" font-size="10" font-weight="bold"%3E?%3C/text%3E%3C/g%3E%3C/svg%3E');
+    /* DURAĞAN ARKA PLAN IŞIKLARI (Spotlight Efekti) */
+    --bg-gradient: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%), /* Sol Üst Hafif Mor */
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%); /* Sağ Alt Hafif Pembe */
+
+    /* KAĞIT DOKUSU (Noise - Göz yorgunluğunu alır) */
+    --bg-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
 
     --surface: #ffffff;
-    --text: #1f2937;
-    --text-muted: #6b7280;
+    --text: #1e293b;
+    --text-muted: #64748b;
     --danger: #ef4444;
     --success: #10b981;
     --warning: #f59e0b;
@@ -23,28 +29,37 @@ body {
     margin: 0; 
     font-family: 'Inter', sans-serif; 
     
-    /* İKİ KATMANLI ARKA PLAN (Desen + Renk Geçişi) */
-    background-image: var(--bg-pattern), var(--bg-gradient);
-    background-size: 300px 300px, 400% 400%; /* Desenin ve renklerin boyutu */
-    background-blend-mode: overlay; /* İki katmanı harmanla */
-    animation: gradientBG 20s ease infinite; /* Renkleri hareket ettir */
+    /* Arka Plan Kurulumu */
+    background-color: #e2e8f0; /* Açık gri (Light Mode varsayılanı) */
+    background-image: var(--bg-gradient), var(--bg-noise);
+    background-attachment: fixed; /* Sayfa kaydırılsa da arka plan sabit kalsın */
     
     min-height: 100vh; 
     display: flex; 
     justify-content: center; 
     align-items: center; 
     color: var(--text); 
+    
+    /* Seçimi Kapat */
     user-select: none; 
     -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
 }
 
-/* Renklerin Yavaşça Hareket Etmesi İçin Animasyon */
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+/* --- DARK MODE İÇİN ÖZEL MAT AYAR --- */
+body.dark-mode {
+    /* Koyu modda arka planı tam profesyonel moda alıyoruz */
+    background-color: var(--bg-color); 
+    background-image: var(--bg-gradient), var(--bg-noise);
+    
+    --surface: #1e293b; /* Slate 800 (Kart rengi) */
+    --text: #f1f5f9;    /* Slate 100 (Yazı rengi) */
+    --text-muted: #94a3b8;
+}
+
+/* Kartların gölgesini yumuşatalım */
+.container {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255,255,255,0.1); /* Hafif sınır */
 }
 .container { background: var(--surface); width: 90%; max-width: 650px; padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; position: relative; overflow: hidden; margin: 20px; transition: all 0.3s ease; }
 .hidden { display: none !important; }
@@ -182,19 +197,8 @@ button:disabled { background: #d1d5db; color: #9ca3af; cursor: not-allowed; tran
     color: white !important;
     border-color: #f59e0b !important;
 }
-/* --- style.css EN ALTA EKLE --- */
-/* --- style.css EN ALTA EKLE --- */
-body.dark-mode {
-    /* KOYU MOD İÇİN ARKA PLAN (Daha koyu renkler ve daha belirgin desen) */
-    --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364, #240b36, #141e30);
-    
-    /* Deseni koyu modda biraz daha görünür yapalım */
-    --bg-pattern: url('data:image/svg+xml,%3Csvg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.08"%3E%3Cpath d="M25 10a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM10 40a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM40 60a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM70 20a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2zM85 80a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5v-2z"/%3E%3Cpath d="M60 10l-5 5 5 5 5-5-5-5zM20 70l-5 5 5 5 5-5-5-5zM90 40l-5 5 5 5 5-5-5-5z"/%3E%3Cpath d="M45 30a5 5 0 1 0 10 0 5 5 0 1 0-10 0zM15 90a5 5 0 1 0 10 0 5 5 0 1 0-10 0zM80 55a5 5 0 1 0 10 0 5 5 0 1 0-10 0z"/%3E%3Ctext x="35" y="85" font-family="Arial" font-size="10" font-weight="bold"%3E?%3C/text%3E%3Ctext x="65" y="45" font-family="Arial" font-size="10" font-weight="bold"%3E?%3C/text%3E%3C/g%3E%3C/svg%3E');
 
-    --surface: #1f2937;
-    --text: #f3f4f6;
-    --text-muted: #9ca3af;
-}
+
 
 
 body.dark-mode .container {
