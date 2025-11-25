@@ -11,10 +11,6 @@
     <link rel="icon" type="image/png" href="https://krtknadmn.karatekin.edu.tr/files/karatekin/odul.png">
 </head>
 <body oncontextmenu="return false">
-    <div class="admin-gate" onclick="toggleAdmin()">
-    <span class="gate-icon">🚪</span>
-    <span class="gate-text">Yönetici Girişi</span>
-    </div>
 
     <div class="container" id="loginScreen">
     <div style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem;" onclick="toggleDarkMode()">🌓</div>
@@ -153,7 +149,11 @@
         <button onclick="closeAdmin()" class="btn-secondary" style="margin-top:20px;">Kapat</button>
     </div>
 
-    
+    <footer style="position: fixed; bottom: 10px; right: 10px; z-index: 999; opacity: 0.8; cursor: pointer;">
+        <span onclick="toggleAdmin()" style="background: rgba(0,0,0,0.8); color: white; padding: 8px 12px; border-radius: 20px; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+            🔒 Yönetici
+        </span>
+    </footer>
 
     <script src="script.js"></script>
 </body>
