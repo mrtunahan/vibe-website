@@ -492,23 +492,19 @@ body.dark-mode .tool-btn.active {
 
 
 /* --- SAĞ TARAF (BİNA RESMİ VE GRADIENT) --- */
+/* style.css dosyasında .landing-right kısmını bul ve bununla değiştir */
 .landing-right {
     flex: 1; /* %50 Genişlik */
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Yazıyı sola yasla */
-    padding-left: 60px; /* Yazı için boşluk */
     
-    /* ARKA PLAN RESMİ VE MAVİ FİLTRE BURADA AYARLANIYOR */
-    background: 
-        /* Üstteki Renk Katmanı (Gradient) - Yarı şeffaf koyu maviden mora */
-        linear-gradient(135deg, rgba(17, 24, 39, 0.85) 0%, rgba(67, 56, 202, 0.8) 100%),
-        /* Alttaki Resim - ÇAKÜ Rektörlük Binası */
-        url('https://krtknadmn.karatekin.edu.tr/files/karatekin/slider/gorsel_2.jpg');
+    /* Buraya kendi resminin adını yaz (Örn: resim.jpg veya img/resim.jpg) */
+    background-image: url('/Users/tunahan/Desktop/vibe-website/WhatsApp Image 2025-11-26 at 21.58.01.jpeg');
     
-    background-size: cover;
-    background-position: center;
+    background-size: cover;     /* Resmi alanı kaplayacak şekilde ayarlar */
+    background-position: center; /* Resmi ortalar */
+    background-repeat: no-repeat;
+    
+    /* Mobilde gizlenmesi için gereken ayar (Zaten vardı, koruyoruz) */
+    display: flex; 
 }
 
 /* Resim üzerindeki yazı */
