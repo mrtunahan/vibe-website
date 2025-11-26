@@ -497,7 +497,7 @@ body.dark-mode .tool-btn.active {
     flex: 1; /* %50 Genişlik */
     
     /* Buraya kendi resminin adını yaz (Örn: resim.jpg veya img/resim.jpg) */
-    background-image: url('/Users/tunahan/Desktop/vibe-website/WhatsApp Image 2025-11-26 at 21.58.01.jpeg');
+    background-image: url('bebe.jpeg');
     
     background-size: cover;     /* Resmi alanı kaplayacak şekilde ayarlar */
     background-position: center; /* Resmi ortalar */
@@ -507,32 +507,6 @@ body.dark-mode .tool-btn.active {
     display: flex; 
 }
 
-/* Resim üzerindeki yazı */
-.overlay-content {
-    color: #fff;
-    z-index: 2;
-    max-width: 400px;
-    animation: fadeInRight 1s ease-out;
-}
-
-.overlay-content h2 {
-    font-size: 3.5rem;
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 20px;
-}
-
-.overlay-content p {
-    font-size: 1.2rem;
-    opacity: 0.9;
-    font-weight: 300;
-}
-
-/* Animasyon */
-@keyframes fadeInRight {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
-}
 
 /* Mobil Uyumluluk */
 @media (max-width: 900px) {
