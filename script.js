@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwzE2439s2OvsNUEaC6Gu13Wfe2F5n2yaaJPc9MBT0m1YFZJrhk9JPS3FwI8hVygR0T/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjoa_UjzaHpn7iQ1PrZRFSFVGiMyd-YuhJMYV-y2qEOWcgWhv_UIl3QX8lN1DiIxxT/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -269,67 +269,43 @@ setTimeout(() => {
     startStudentHeartbeat();
 }
 
-// --- SORU GÖSTERİMİ (GÜNCELLENDİ) ---
 function showQuestion(index) {
-    hideAgent();
-    
-    // Progress Bar
+    const q = activeQuestions[index];
     const progress = ((index + 1) / activeQuestions.length) * 100;
     document.getElementById('progressBar').style.width = `${progress}%`;
+    document.getElementById('qIndex').innerText = `SORU ${index + 1} / ${activeQuestions.length}`;
+    document.getElementById('qText').innerHTML = q.question;
 
-    const q = activeQuestions[index];
-    document.getElementById('qIndex').innerText = `SORU ${index + 1}`;
-    document.getElementById('qText').innerText = q.question;
-    
-    // Görsel Kontrolü
     const imgEl = document.getElementById('qImage');
-    if (q.image && q.image.trim() !== "") { imgEl.src = q.image; imgEl.classList.remove('hidden'); }
-    else { imgEl.classList.add('hidden'); }
+    if (q.image && q.image.startsWith('http')) { imgEl.src = q.image; imgEl.style.display = 'block'; }
+    else { imgEl.style.display = 'none'; }
 
-    const div = document.getElementById('qOptions');
-    div.innerHTML = ""; 
+    renderOptions(q, index);
 
-    // 🔥🔥🔥 İŞTE BURASI DEĞİŞTİ 🔥🔥🔥
-    // EĞER SORU KLASİK (TEXT) İSE:
-    if (q.type === "text") {
-        // Daha önce bir şey yazdıysa onu getir, yoksa boş olsun
-        let savedAnswer = userAnswers[index] || ""; 
-        
-        div.innerHTML = `
-            <textarea 
-                id="textAnswerInput" 
-                placeholder="Cevabınızı buraya yazınız..." 
-                style="width:100%; height:100px; padding:10px; border:2px solid #e5e7eb; border-radius:12px; font-family:inherit;"
-                oninput="saveTextAnswer(${index}, this.value)"
-            >${savedAnswer}</textarea>
-        `;
-    } 
-    // EĞER SORU TEST (RADIO) İSE:
-    else {
-        q.options.forEach((opt, i) => {
-            const chk = userAnswers[index] === i ? "checked" : "";
-            div.innerHTML += `
-                <label onclick="selectOption(${index}, ${i})">
-                    <input type="radio" name="opt" ${chk}> 
-                    <span>${opt}</span>
-                </label>`;
-        });
-    }
-
-    const btn = document.getElementById('nextBtn');
+    const nextBtn = document.getElementById('nextBtn');
     if (index === activeQuestions.length - 1) {
-        btn.innerText = "Sınavı Bitir ✅";
-        btn.onclick = () => finishQuiz('NORMAL');
+        nextBtn.innerText = "Sınavı Bitir ✅";
+        nextBtn.onclick = confirmFinishQuiz;
     } else {
-        btn.innerText = "Sonraki Soru ➡️";
-        btn.onclick = nextQuestion;
+        nextBtn.innerText = "Sonraki Soru ➡️";
+        nextBtn.onclick = () => { currentQuestionIndex++; showQuestion(currentQuestionIndex); };
     }
-    startHintTimer(index);
+    
+    // İpucu
+    const agentBox = document.getElementById('agentBox');
+    agentBox.classList.add('hidden');
+    if(hintTimeout) clearTimeout(hintTimeout);
+    if(q.hint) {
+        hintTimeout = setTimeout(() => {
+            document.getElementById('agentText').innerText = q.hint;
+            agentBox.classList.remove('hidden');
+        }, 45000); // 45 Saniye sonra ipucu
+    }
+    
+    if (window.MathJax) MathJax.typesetPromise([document.getElementById('quizScreen')]).catch(()=>{});
+    updateFlagButtonColor();
+    updateNavVisuals(); // <-- YENİ: Hangi sorudayız güncelle
 }
-
-// --- YENİ: YAZILAN CEVABI KAYDETME FONKSİYONU ---
-// Bunu da script.js'in en altına veya uygun bir yere ekle
-
 
 function renderOptions(q, index) {
     const div = document.getElementById('qOptions');
@@ -496,29 +472,29 @@ function finishQuiz(type) {
 
     
 
-    let score = 0, topicStats = {};
-    let testSoruSayisi = 0; // Sadece test sorularını sayalım
+    let score = 0;
+    const pts = 100 / activeQuestions.length;
 
+    // Puanlama Mantığı
     activeQuestions.forEach((q, i) => {
-        if(!topicStats[q.topic]) topicStats[q.topic] = {total:0, correct:0};
-        
-        // SADECE TEST SORULARINI PUANLA
-        if (q.type !== "text") {
-            topicStats[q.topic].total++;
-            testSoruSayisi++;
-            
-            // Doğru bildiyse
-            if (type !== "CHEATING" && userAnswers[i] === q._secureAnswer) {
-                topicStats[q.topic].correct++;
-                // Puanı hesaplarken toplam soruya değil, test soru sayısına böleceğiz
-                // Ama şimdilik basitlik olsun diye +1 diyelim, sonra oranlarız.
-                score++; 
-            }
+        if(type.startsWith("CHEATING")) return;
+
+        const correct = deobfuscateAnswer(q._secureAnswer);
+        const user = userAnswers[i];
+        let isOk = false;
+
+        if (q.type === 'text') {
+            isOk = (user && user.toLowerCase() === correct.toLowerCase());
+        } else if (q.type === 'checkbox') {
+             isOk = (user === correct); 
+        } else {
+            isOk = (user === correct);
         }
+
+        if (isOk) score += pts;
     });
-    
-    // Puanı Yüzdeye Çevir (Klasik sorular puanı etkilemez, 0 sayılır şimdilik)
-    score = testSoruSayisi > 0 ? Math.round((score / testSoruSayisi) * 100) : 0;
+
+    score = Math.round(score);
 
     // Ekran Değişimi (Animasyonlu)
     document.getElementById('quizScreen').classList.add('hidden');
@@ -1131,7 +1107,4 @@ function selectRole(role) {
             document.getElementById('adminControls').classList.add('hidden');
         }
     }, 400); // 0.4 sn bekle
-}
-function saveTextAnswer(index, value) {
-    userAnswers[index] = value; // Yazılan metni cevap dizisine kaydet
 }
