@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjoa_UjzaHpn7iQ1PrZRFSFVGiMyd-YuhJMYV-y2qEOWcgWhv_UIl3QX8lN1DiIxxT/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3knEiwRp-DOhCzsWQhaDnKDf-RIR21kN9yAgfXt5IkZehj7QddgQf1niVqGoniyXG/exec';
 
 // Global değişkenler
 let questionsSource = [];
