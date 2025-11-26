@@ -496,7 +496,7 @@ body.dark-mode .tool-btn.active {
 .landing-right {
     flex: 1;
     /* Test için bu internet adresini kullan */
-    background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-image: url('bebe.jpeg');
     background-size: cover;
     background-position: center;
     border-top-right-radius: 30px; /* Köşeleri düzeltir */
