@@ -494,17 +494,13 @@ body.dark-mode .tool-btn.active {
 /* --- SAĞ TARAF (BİNA RESMİ VE GRADIENT) --- */
 /* style.css dosyasında .landing-right kısmını bul ve bununla değiştir */
 .landing-right {
-    flex: 1; /* %50 Genişlik */
-    
-    /* Buraya kendi resminin adını yaz (Örn: resim.jpg veya img/resim.jpg) */
-    background-image: url('bebe.jpeg');
-    
-    background-size: cover;     /* Resmi alanı kaplayacak şekilde ayarlar */
-    background-position: center; /* Resmi ortalar */
-    background-repeat: no-repeat;
-    
-    /* Mobilde gizlenmesi için gereken ayar (Zaten vardı, koruyoruz) */
-    display: flex; 
+    flex: 1;
+    /* Test için bu internet adresini kullan */
+    background-image: url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+    background-size: cover;
+    background-position: center;
+    border-top-right-radius: 30px; /* Köşeleri düzeltir */
+    border-bottom-right-radius: 30px;
 }
 
 
