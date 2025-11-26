@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyrW98zgdJ6vyqD4e-iTNoPf6FJBK2737lpf0FUbH4kZZnQXVrESsqvE9-T40HELxjw/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwjoa_UjzaHpn7iQ1PrZRFSFVGiMyd-YuhJMYV-y2qEOWcgWhv_UIl3QX8lN1DiIxxT/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -460,66 +460,107 @@ function confirmFinishQuiz() {
 
 // script.js dosyasındaki finishQuiz fonksiyonunu tamamen bununla değiştir:
 
-// script.js dosyasındaki finishQuiz fonksiyonunun içine entegre edilecekler
-
 function finishQuiz(type) {
     if (!isExamActive) return;
-    isExamActive = false;
+    isExamActive = false; // Sınavı pasife çek (Böylece normal kalp atışı durur)
+    
     clearInterval(examTimerInterval);
-    if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
+    if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval); // <-- YENİ EKLENEN SATIR
+    
+    if(hintTimeout) clearTimeout(hintTimeout);
     if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 
-    let testScore = 0; // Sadece test sorularından gelen puan
+    
+
+    let score = 0;
     const pts = 100 / activeQuestions.length;
-    let hasOpenEnded = false; // Açık uçlu soru var mı?
 
     // Puanlama Mantığı
     activeQuestions.forEach((q, i) => {
         if(type.startsWith("CHEATING")) return;
 
-        // Metin veya Kod sorusu ise Frontend puanlayamaz (AI yapacak)
-        if (q.type === 'text' || q.type === 'code') {
-            hasOpenEnded = true;
-            // Buradan puan eklemiyoruz, 0 sayıyoruz şimdilik.
+        const correct = deobfuscateAnswer(q._secureAnswer);
+        const user = userAnswers[i];
+        let isOk = false;
+
+        if (q.type === 'text') {
+            isOk = (user && user.toLowerCase() === correct.toLowerCase());
+        } else if (q.type === 'checkbox') {
+             isOk = (user === correct); 
         } else {
-            // Klasik sorular (Checkbox, Radio)
-            const correct = deobfuscateAnswer(q._secureAnswer);
-            const user = userAnswers[i];
-            let isOk = false;
-            
-            if (q.type === 'checkbox') {
-                 isOk = (user === correct); 
-            } else {
-                isOk = (user === correct); // Radio
-            }
-            if (isOk) testScore += pts;
+            isOk = (user === correct);
         }
+
+        if (isOk) score += pts;
     });
 
-    testScore = Math.round(testScore);
+    score = Math.round(score);
 
-    // EKRAN GÜNCELLEME
+    // Ekran Değişimi (Animasyonlu)
     document.getElementById('quizScreen').classList.add('hidden');
-    document.getElementById('resultScreen').classList.remove('hidden');
+    const resultScreen = document.getElementById('resultScreen');
+    resultScreen.classList.remove('hidden');
+    
+    const scoreCard = document.querySelector('.score-card');
+    if(scoreCard) scoreCard.classList.add('score-pop-animation');
 
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
-    
-    // Eğer açık uçlu soru varsa öğrenciyi uyar
-    if (hasOpenEnded) {
-        document.getElementById('score').innerText = testScore + "*";
-        document.getElementById('feedbackMessage').innerHTML = `
-            <span style="color:#f59e0b">⚠️ Puanınız hesaplanıyor...</span><br>
-            <small>* Şu anki puan sadece test sorularını içerir. <br>
-            Açık uçlu cevaplarınız <b>Yapay Zeka</b> tarafından incelendikten sonra 
-            kesin notunuz sisteme yansıyacaktır.</small>
-        `;
+    document.getElementById('score').innerText = score;
+
+    // Durum Belirleme ve Feedback
+    const fb = document.getElementById('feedbackMessage');
+    let statusNote = "NORMAL";
+
+    // --- SİNYAL GÖNDERME MANTIĞI ---
+    if (type.startsWith("CHEATING")) {
+        // 1. KOPYA DURUMU
+        fb.innerHTML = "⚠️ KOPYA GİRİŞİMİ - SINAV İPTAL";
+        fb.style.color = "red";
+        statusNote = "KOPYA";
+
+        // Hoca Paneline "KOPYA" sinyali gönder
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "HEARTBEAT",
+                Numara: studentNumber,
+                Isim: studentName,
+                Soru: currentQuestionIndex + 1,
+                Kopya: "⚠️ KOPYA TESPİTİ",
+                Itiraz: "-"
+            })
+        }).catch(err => console.log("Kopya sinyali hatası"));
+
     } else {
-        document.getElementById('score').innerText = testScore;
-        // ... (Klasik geçti/kaldı mesajları) ...
+        // 2. NORMAL BİTİŞ DURUMU
+        if (score >= 50) {
+            fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
+            fb.style.color = "green";
+            // Konfeti
+             if (window.confetti) {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+        } else {
+            fb.innerHTML = "Kaldınız.";
+        }
+
+        // Hoca Paneline "BİTTİ" sinyali gönder (BU KISIM EKSİKTİ)
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                type: "HEARTBEAT",
+                Numara: studentNumber,
+                Isim: studentName,
+                Soru: "BİTTİ",
+                Kopya: "TAMAMLANDI", // Bu metin paneli Yeşil yapar
+                Itiraz: "-"
+            })
+        }).catch(err => console.log("Bitiş sinyali hatası"));
     }
 
-    // --- GOOGLE SHEET'E GÖNDERME (AI İÇİN VERİ PAKETİ) ---
+    generateReviewPanel();
+
     // İtirazları Topla
     let itirazMetni = "";
     if (typeof userObjections !== 'undefined') {
@@ -530,19 +571,17 @@ function finishQuiz(type) {
     }
     if(itirazMetni === "") itirazMetni = "-";
 
+    // Sonucu Kaydet (Google Sheet)
     sendToGoogleSheets({
         type: "RESULT",
         Isim: studentName,
         Numara: studentNumber,
-        testScore: testScore,   // Sadece testlerden aldığı puanı yolla
-        Durum: type.startsWith("CHEATING") ? "KOPYA" : "NORMAL",
-        Itirazlar: itirazMetni,
-        
-        // AI İÇİN KRİTİK VERİLER:
-        answers: userAnswers,       // Öğrencinin yazdığı metinler
-        questions: activeQuestions  // Soruların kendisi ve doğru cevapları
+        Puan: score,
+        Durum: statusNote,
+        Itirazlar: itirazMetni
     });
-
+    
+    // LocalStorage Temizliği
     localStorage.removeItem(`exam_progress_${studentNumber}`);
 }
 
