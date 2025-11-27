@@ -15,7 +15,8 @@
 body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-gradient); min-height: 100vh; display: flex; justify-content: center; align-items: center; color: var(--text); user-select: none; -webkit-user-select: none; /* Safari */
     -ms-user-select: none; /* IE 10 and IE 11 */
     user-select: none; /* Standard syntax */}
-.container { background: var(--surface); width: 90%; max-width: 650px; padding: 40px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; position: relative; overflow: hidden; margin: 20px; transition: all 0.3s ease; }
+.container { background: var(--surface); width: 90%; max-width: 650px; padding: 40px; border-radius: 24px; 
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; position: relative; overflow: hidden; margin: 20px; transition: all 0.3s ease; }
 .hidden { display: none !important; }
 .uni-logo { 
     /* Boyutlandırma ve Yuvarlatma */
@@ -437,12 +438,11 @@ body.dark-mode .tool-btn.active {
 .brand-name { font-size: 1.4rem; font-weight: 700; color: #1f2937; letter-spacing: -0.5px; }
 
 /* Başlıklar */
-.main-title { 
-    font-size: 2rem; 
-    font-weight: 800; 
-    color: #4F46E5; /* Mor/Mavi tonu */
-    margin: 0 0 10px 0; 
-    letter-spacing: -1px;
+.main-title {
+    background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
 }
 .sub-title {
     font-size: 1.5rem;
@@ -494,19 +494,48 @@ body.dark-mode .tool-btn.active {
 /* --- SAĞ TARAF (BİNA RESMİ VE GRADIENT) --- */
 
 
-/* Mobil Uyumluluk */
-@media (max-width: 900px) {
-    .landing-container { flex-direction: column; height: auto; max-height: none; }
-    .landing-right { display: none; } /* Mobilde resmi gizle */
-    .landing-left { padding: 30px; }
+/* --- MEVCUT KODUNDAKİ .landing-left KISMINI GÜNCELLE --- */
+.landing-left {
+    flex: 1;        /* Esnek kutu: 1 birim yer kapla */
+    width: 50%;     /* Genişlik %50 olsun */
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
-/* Dark Mode Uyumu */
-body.dark-mode .landing-wrapper { background: #111827; }
-body.dark-mode .landing-container { background: #1f2937; box-shadow: none; }
-body.dark-mode .landing-header .brand-name, 
-body.dark-mode .landing-titles .sub-title,
-body.dark-mode .role-text strong { color: #fff; }
-body.dark-mode .role-card { background: #374151; border-color: #4b5563; }
-body.dark-mode .role-icon-box { background: #4b5563; }
-body.dark-mode .main-title { color: #818cf8; }
+/* --- BU KISIM KODUNDA EKSİKTİ, BUNU EKLE --- */
+.landing-right {
+    flex: 1;        /* Bu da 1 birim yer kaplasın (Eşitlenirler) */
+    width: 50%;     /* Genişlik %50 */
+    position: relative;
+    overflow: hidden; /* Resim taşarsa gizle */
+    background: #f3f4f6; /* Resim yüklenmezse görünecek renk */
+}
+
+/* Sağ taraftaki resmin ayarları */
+.landing-right img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Resmi sündürmeden alanı doldurur */
+    display: block;
+}
+
+/* --- MOBİL UYUMLULUK KISMINI DA GÜNCELLE --- */
+@media (max-width: 900px) {
+    .landing-container { 
+        flex-direction: column; 
+        height: auto; 
+        max-height: none; 
+        width: 90%; /* Mobilde biraz daha daralmasın */
+    }
+    
+    .landing-right { 
+        display: none; /* Mobilde resmi gizle */
+    } 
+    
+    .landing-left { 
+        padding: 40px 30px; 
+        width: 100%; /* Mobilde tam genişlik */
+    }
+}

@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPmzsQit_STPmOdnFNnwvXVlil3dCNzuRESSVuLi3glytyEJnUJYNgIemTJFnMax3y/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx2iAIJpxNIoC3NhsXXT8tCiQLYfxKhcwy2ImwKP7kZjBC62NJT2jSsjcTysJqXPqWr/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -197,75 +197,90 @@ function initializeQuiz() {
     }
 
     isExamActive = true;
+    
+    // Soruları karıştır
     const shuffledQuestions = shuffleArray([...questionsSource]);
 
     activeQuestions = shuffledQuestions.map(q => {
+        // 1. Şıkları karıştırırken orijinal sıralarını koru
+        // (Şıkların metnini ve orijinal sırasını tutuyoruz)
         const optionsWithIndex = (q.options || []).map((opt, idx) => ({ val: opt, originalIdx: idx }));
         const shuffledOptionsMap = shuffleArray(optionsWithIndex);
         const finalOptions = shuffledOptionsMap.map(o => o.val);
 
-        let newAnswerIndex = "";
+        let newAnswerIndex = -1; // Varsayılan: Bulunamadı
+
+        // CEVAP BULMA MANTIĞI (GÜNCELLENDİ)
+        const excelAnswer = (q.answer || "").toString().trim();
+
         if (q.type === 'text') {
-            newAnswerIndex = q.answer;
-        } else {
-            const originalAnsStr = (q.answer !== undefined && q.answer !== null) ? q.answer.toString() : "";
-            if(q.type === 'checkbox' && originalAnsStr.includes(',')) {
-                newAnswerIndex = originalAnsStr; 
-            } else {
-                const found = shuffledOptionsMap.findIndex(o => o.originalIdx.toString() === originalAnsStr);
-                newAnswerIndex = found !== -1 ? found : "";
+            // Klasik soruysa cevabı direkt al
+            newAnswerIndex = excelAnswer;
+        } 
+        else {
+            // TEST SORUSU İSE:
+            
+            // YÖNTEM A: Eğer Excel'e "Ankara" yazıldıysa (Metin eşleştirme)
+            // Karıştırılmış şıkların içinde "Ankara" yazısını arıyoruz
+            let textMatchIndex = finalOptions.findIndex(opt => opt.toLowerCase() === excelAnswer.toLowerCase());
+
+            if (textMatchIndex !== -1) {
+                // Eşleşme bulundu! (Örn: Ankara şıkkı şu an 2. sırada)
+                newAnswerIndex = textMatchIndex;
+            } 
+            else {
+                // YÖNTEM B: Eğer Excel'e "2" veya "B" yazıldıysa (İndex eşleştirme)
+                // Orijinal Excel sırasına göre hangi şıkkın doğru olduğunu bul
+                
+                // Harf çevirimi (A=0, B=1...)
+                let originalIndex = -1;
+                if(["a","b","c","d","e"].includes(excelAnswer.toLowerCase())) {
+                     originalIndex = excelAnswer.toLowerCase().charCodeAt(0) - 97;
+                } else if (!isNaN(excelAnswer)) {
+                     // Sayı ise (1,2,3 -> 0,1,2 yap)
+                     originalIndex = parseInt(excelAnswer) - 1; 
+                }
+
+                // Şimdi bu orijinal indeksin (Örn: 1 yani B şıkkının)
+                // karıştırıldıktan sonra nereye gittiğini bulalım.
+                newAnswerIndex = shuffledOptionsMap.findIndex(o => o.originalIdx === originalIndex);
             }
         }
 
         return {
             ...q,
-            options: finalOptions,
-            _secureAnswer: obfuscateAnswer(newAnswerIndex.toString()),
+            options: finalOptions, // Karıştırılmış şık listesi
+            _secureAnswer: obfuscateAnswer(newAnswerIndex.toString()), // Şifrelenmiş doğru cevap indeksi
             topic: q.topic || "Genel",
             image: q.image || ""
         };
     });
 
+    // ... (Kalan kodlar aynı: LocalStorage kontrolleri vs.) ...
+    
     const savedData = localStorage.getItem(`exam_progress_${studentNumber}`);
-if (savedData) {
-    const parsed = JSON.parse(savedData);
-    // Eğer soru sayısı değişmediyse eski cevapları yükle
-    if (parsed.answers && parsed.answers.length === activeQuestions.length) {
-        userAnswers = parsed.answers;
-        Swal.fire({
-            icon: 'info',
-            title: 'Kaldığınız Yerden Devam',
-            text: 'Önceki oturumunuzdan cevaplarınız yüklendi.',
-            timer: 2000,
-            showConfirmButton: false
-        });
+    if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.answers && parsed.answers.length === activeQuestions.length) {
+            userAnswers = parsed.answers;
+        } else {
+            userAnswers = new Array(activeQuestions.length).fill(null);
+        }
+        if(parsed.objections) userObjections = parsed.objections;
     } else {
         userAnswers = new Array(activeQuestions.length).fill(null);
     }
-    
-    // İtirazları da geri yükle
-    if(parsed.objections) {
-        userObjections = parsed.objections;
-    }
-} else {
-    userAnswers = new Array(activeQuestions.length).fill(null);
-}
 
-// Navigasyon butonlarını ve görselleri hemen güncelle
-setTimeout(() => {
-    createNavButtons();
-    updateNavVisuals();
-}, 100);
+    setTimeout(() => { createNavButtons(); updateNavVisuals(); }, 100);
+    
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('quizScreen').classList.remove('hidden');
     document.getElementById('displayName').innerText = studentName;
     currentQuestionIndex = 0;
     showQuestion(0);
     startExamTimer();
-    
-
-    createNavButtons(); // <-- YENİ: Butonları oluştur
-    updateNavVisuals(); // <-- YENİ: İlk durumu boya
+    createNavButtons();
+    updateNavVisuals();
     startStudentHeartbeat();
 }
 
