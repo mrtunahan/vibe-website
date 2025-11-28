@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HocamQuiz - Güvenli Sınav</title>
+    <title>HocamQuiz</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -11,91 +11,107 @@
     <link rel="icon" type="image/png" href="https://krtknadmn.karatekin.edu.tr/files/karatekin/odul.png">
 </head>
 <body oncontextmenu="return false">
-
-    <div id="connectionWarning" class="connection-warning">
-        📡 Bağlantı Koptu! Lütfen internetinizi kontrol edin. Verileriniz yerel hafızaya kaydediliyor.
-    </div>
-
     <div class="landing-wrapper" id="landingPage">
-        <div class="landing-container">
-            <div class="landing-left">
-                <div class="landing-header">
-                    <img src="https://krtknadmn.karatekin.edu.tr/files/karatekin/odul.png" alt="ÇAKÜ Logo">
-                    <span class="brand-name">ÇAKÜ</span>
-                </div>
-                <div class="landing-titles">
-                    <h1 class="main-title">Online Quiz Sistemi</h1>
-                    <h3 class="sub-title">Kullanıcı Girişi</h3>
-                    <p class="desc-text">Lütfen sisteme giriş yapınız.</p>
-                </div>
-                <div class="role-grid">
-                    <div class="role-card" onclick="selectRole('student')">
-                        <div class="role-icon-box">🎓</div>
-                        <div class="role-text">
-                            <strong>Öğrenci Girişi</strong>
-                            <span>Sınav olmak için tıklayın</span>
-                        </div>
-                        <div class="arrow-icon">➜</div>
-                    </div>
-                    <div class="role-card" onclick="selectRole('teacher')">
-                        <div class="role-icon-box">👨‍🏫</div>
-                        <div class="role-text">
-                            <strong>Akademisyen Girişi</strong>
-                            <span>Yönetici paneli için tıklayın</span>
-                        </div>
-                        <div class="arrow-icon">➜</div>
-                    </div>
-                </div>
+    <div class="landing-container">
+        <div class="landing-left">
+            <div class="landing-header">
+                <img src="https://krtknadmn.karatekin.edu.tr/files/karatekin/odul.png" alt="ÇAKÜ Logo">
+                <span class="brand-name">ÇAKÜ</span>
             </div>
-            <div class="landing-right">
-                <img src="bebe.jpeg" alt="Kapak Resmi">
+            
+            <div class="landing-titles">
+                <h1 class="main-title">Online Quiz Sistemi</h1>
+                <h3 class="sub-title">Kullanıcı Girişi</h3>
+                <p class="desc-text">Lütfen aşağıdan sisteme giriş yapınız.</p>
+            </div>
+
+            <div class="role-grid">
+                <div class="role-card" onclick="selectRole('student')">
+                    <div class="role-icon-box">
+                        <span class="role-icon">🎓</span>
+                    </div>
+                    <div class="role-text">
+                        <strong>Öğrenci Girişi</strong>
+                        <span>Sınav olmak için tıklayın</span>
+                    </div>
+                    <div class="arrow-icon">➜</div>
+                </div>
+
+                <div class="role-card" onclick="selectRole('teacher')">
+                    <div class="role-icon-box">
+                        <span class="role-icon">👨‍🏫</span>
+                    </div>
+                    <div class="role-text">
+                        <strong>Akademisyen Girişi</strong>
+                        <span>Yönetici paneli için tıklayın</span>
+                    </div>
+                    <div class="arrow-icon">➜</div>
+                </div>
             </div>
         </div>
-    </div>
+
+       <div class="landing-right">
+    <img src="bebe.jpeg" alt="Kapak Resmi">
+</div>
+</div>
+</div>
 
     <div class="container hidden" id="loginScreen">
-        <div onclick="location.reload()" style="position:absolute; top:20px; left:20px; cursor:pointer; color:#999;">← Geri</div>
-        <div style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem;" onclick="toggleDarkMode()">🌓</div>
-        
-        <img src="https://websitem.karatekin.edu.tr/user_files/ahmettunahankorkmaz/profil_pic/21102024101020970.jpg" class="uni-logo">
-        
-        <div class="animate-entry delay-1">
-            <h1>Quiz</h1>
-            <p>Öğrenci bilgilerinizi giriniz.</p>
-        </div>
-        
-        <input type="text" id="studentNameDisplay" class="animate-entry delay-2" placeholder="Öğrenci Adı (Otomatik Gelir)" disabled>
-        <input type="number" id="studentId" class="animate-entry delay-3" placeholder="Öğrenci No (9 Hane)" autocomplete="off">
-        
-        <div class="warning-box animate-entry delay-4">
-            <strong>⚠️ KURALLAR:</strong><br>
-            • Sayfayı yenilerseniz kaldığınız yerden devam edersiniz.<br>
-            • Tam ekrandan çıkmak veya sekme değiştirmek yasaktır.
-        </div>
-        
-        <button id="startBtn" class="btn-primary animate-entry delay-4" onclick="startQuizAttempt()">Giriş Yap ve Başlat</button>
+    <div onclick="location.reload()" style="position:absolute; top:20px; left:20px; cursor:pointer; color:#999; font-size:0.9rem;">
+        ← Geri Dön
     </div>
 
+    
+
+    <div style="position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem;" onclick="toggleDarkMode()">🌓</div>
+
+    <img src="https://websitem.karatekin.edu.tr/user_files/ahmettunahankorkmaz/profil_pic/21102024101020970.jpg" alt="Uni Logo" class="uni-logo" >
+    
+    <div class="animate-entry delay-1">
+        <h1>Quiz</h1>
+        <p>Lütfen öğrenci bilgilerinizi giriniz.</p>
+    </div>
+    
+    <input type="text" id="studentNameDisplay" class="animate-entry delay-2" placeholder="Öğrenci Adı (Numarayı yazınca otomatik gelir)" disabled style="background: #f3f4f6; cursor: not-allowed; font-weight: bold; color: #4F46E5;">
+    
+    <input type="number" id="studentId" class="animate-entry delay-3" placeholder="Öğrenci No (9 Hane)" autocomplete="off">
+    
+    <div class="warning-box animate-entry delay-4">
+        <strong>⚠️ SINAV KURALLARI:</strong><br>
+        • Numaranız sistemde kayıtlı olmalıdır.<br>
+        • Sadece <strong>tek giriş</strong> hakkınız vardır.<br>
+        • Tam ekran zorunludur.
+    </div>
+    
+    <button id="startBtn" class="btn-primary animate-entry delay-4" onclick="startQuizAttempt()">Giriş Yap ve Başlat</button>
+</div>
     <div class="container hidden" id="waitingScreen">
-        <div class="uni-logo" style="width: 80px; height: 80px;">
-            <img src="https://websitem.karatekin.edu.tr/user_files/ahmettunahankorkmaz/profil_pic/21102024101020970.jpg" style="width:100%;height:100%;border-radius:50%;">
+        <div class="uni-logo" style="margin: 0 auto 20px auto; width: 80px; height: 80px;">
+            <img src="https://websitem.karatekin.edu.tr/user_files/ahmettunahankorkmaz/profil_pic/21102024101020970.jpg" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
         </div>
         <h2>⏳ Sınav Bekleniyor...</h2>
-        <p>Eğitmen onayı ile başlayacaktır.</p>
+        <p>Lütfen bekleyiniz. Sınav eğitmen onayı ile başlayacaktır.</p>
+        <div class="warning-box" style="text-align:center;">
+            <strong>Adınız:</strong> <span id="waitName" style="color:#4F46E5; font-weight:bold;">...</span><br>
+            <span style="font-size:0.8rem; color:green;">● Bağlantı Kuruldu. Hoca panelinde görünüyorsunuz.</span>
+        </div>
         <div class="loader" style="margin: 20px auto; border: 5px solid #f3f3f3; border-top: 5px solid #4F46E5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
         <style>@keyframes spin {0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }}</style>
     </div>
-
     <div class="container hidden" id="quizScreen">
         <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+
         <div id="questionNav" class="nav-grid"></div>
         <div class="header-info">
-            <span id="displayName">Öğrenci</span>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <span onclick="toggleDarkMode()" style="cursor:pointer; font-size:1.5rem;" title="Gece Modu">🌓</span>
-                <span id="timerWrapper">⏱️ <span id="timer">Loading...</span></span>
-            </div>
-        </div>
+    <span id="displayName">Öğrenci</span>
+
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span onclick="toggleDarkMode()" style="cursor:pointer; font-size:1.5rem;" title="Gece Modu">🌓</span>
+        
+        <span id="timerWrapper">⏱️ <span id="timer">30:00</span></span>
+    </div>
+</div>
         
         <div class="question-card">
             <div class="question-header"><span class="q-badge" id="qIndex">SORU 1</span></div>
@@ -107,9 +123,11 @@
                 <span style="font-size: 1.5rem;">💡</span>
                 <div><strong>İpucu:</strong> <span id="agentText">...</span></div>
             </div>
-            
+
             <div style="text-align: right; margin-top: 15px;">
-                <button onclick="flagQuestion()" id="flagBtn" style="background: #f59e0b; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem; border-radius:8px;">⚠️ Hata Bildir</button>
+                <button onclick="flagQuestion()" id="flagBtn" style="background: #f59e0b; color: white; width: auto; padding: 8px 15px; font-size: 0.9rem; border:none; border-radius:8px; cursor:pointer;">
+                    ⚠️ Bu Soruda Hata Var / İtiraz Et
+                </button>
             </div>
         </div>
 
@@ -120,46 +138,68 @@
         <h1>🏁 Sınav Tamamlandı</h1>
         <div class="score-card">
             <h2 id="resultName">...</h2>
-            <p>Puan ve sonuçlar eğitmen tarafından incelendikten sonra açıklanacaktır.</p>
+            <p>No: <span id="resultId">...</span></p>
+            <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+            <span>PUANINIZ</span>
+            <span id="score">0</span>
+            <p id="feedbackMessage" style="font-weight: bold;"></p>
         </div>
+        <button onclick="toggleReview()" class="btn-secondary">🔍 Cevap Anahtarını Gör</button>
+        <div id="reviewArea" class="hidden review-area"></div>
     </div>
 
     <div id="adminPanel" class="container hidden" style="border: 2px solid #ef4444;">
         <h2 style="color:#ef4444;">🛠️ Hoca Paneli</h2>
         <div id="adminLogin">
             <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
-            <button onclick="adminLoginAttempt()" class="btn-primary" style="background:#374151;">Giriş</button>
+            <button onclick="adminLoginAttempt()" class="btn-primary" style="background:#374151; margin-top:10px;">Giriş</button>
         </div>
         <div id="adminControls" class="hidden">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                <button onclick="toggleGlobalExam('STARTED')" style="background:#059669; padding:8px;">🚀 BAŞLAT</button>
-                <button onclick="toggleGlobalExam('WAITING')" style="background:#b91c1c; padding:8px;">⛔ DURDUR</button>
-            </div>
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button onclick="showAdminTab('monitor')" class="btn-secondary">📊 Takip</button>
-                <button onclick="showAdminTab('questions')" class="btn-secondary">📝 Sorular</button>
-            </div>
-
-            <div id="tab-monitor">
-                <div style="background:#f9fafb; border:1px solid #e5e7eb; height:300px; overflow-y:auto;">
-                    <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
-                        <tbody id="liveTableBody"><tr><td>Veri bekleniyor...</td></tr></tbody>
-                    </table>
-                </div>
-                <div style="margin-top:10px;">
-                    <input type="text" id="adminMsgInput" placeholder="Öğrenciye uyarı mesajı gönder...">
-                    <button onclick="sendBroadcastMessage()" style="width:auto; padding:8px; background:#4F46E5; color:white;">Gönder</button>
-                </div>
-            </div>
-
-            <div id="tab-questions" class="hidden">
-                <textarea id="jsonInput" placeholder='JSON Soruları...' style="width:100%; height:100px;"></textarea>
-                <button onclick="uploadQuestions()" style="background:#10b981; color:white;">📥 Yükle</button>
-                <button onclick="deleteQuestions()" style="background:#ef4444; color:white;">🗑️ Sil</button>
-            </div>
-        </div>
-        <button onclick="location.reload()" class="btn-secondary" style="margin-top:20px;">Çıkış</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <p style="color:green; font-weight:bold; margin:0;">✅ Yönetici Modu</p>
+        <button onclick="startAdminMonitor()" style="width:auto; padding:8px 15px; background:#4F46E5; font-size:0.9rem;">📡 Canlı İzlemeyi Başlat</button>
+        <button onclick="toggleGlobalExam('STARTED')" id="globalStartBtn" style="width:auto; padding:8px 15px; background:#059669; font-size:0.9rem; margin-left:10px;">🚀 Sınavı BAŞLAT</button>
+        <button onclick="toggleGlobalExam('WAITING')" style="width:auto; padding:8px 15px; background:#b91c1c; font-size:0.9rem; margin-left:5px;">⛔ DURDUR</button>
     </div>
+
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button onclick="showAdminTab('monitor')" class="btn-secondary" style="padding:10px;">📊 Canlı Takip</button>
+        <button onclick="showAdminTab('questions')" class="btn-secondary" style="padding:10px;">📝 Soru Yönetimi</button>
+    </div>
+
+    <div id="tab-monitor">
+        <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:10px; height:300px; overflow-y:auto;">
+            <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
+                <thead>
+                    <tr style="background:#e5e7eb; text-align:left;">
+                        <th style="padding:8px;">No</th>
+                        <th style="padding:8px;">Öğrenci</th>
+                        <th style="padding:8px;">Durum</th>
+                        <th style="padding:8px;">Soru</th>
+                        <th style="padding:8px;">İtiraz</th>
+                    </tr>
+                </thead>
+                <tbody id="liveTableBody">
+                    <tr><td colspan="5" style="text-align:center; padding:20px;">Veri bekleniyor...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top:10px; font-size:0.8rem; color:#666;">
+            * Liste her 10 saniyede bir yenilenir. <span style="color:red;">Kırmızı</span>: Kopya şüphesi.
+        </div>
+    </div>
+
+    <div id="tab-questions" class="hidden">
+        <button onclick="deleteQuestions()" style="background:#ef4444; color:white;">🗑️ Tüm Soruları Sil</button>
+        <textarea id="jsonInput" placeholder='JSON Kodunu Buraya Yapıştır...' style="width:100%; height:120px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px;"></textarea>
+        <button onclick="uploadQuestions()" style="background:#10b981; color:white;">📥 Soruları Yükle</button>
+        <p id="adminStatus" style="font-size:0.9rem; color:#666;"></p>
+    </div>
+</div>
+        <button onclick="closeAdmin()" class="btn-secondary" style="margin-top:20px;">Kapat</button>
+    </div>
+
+    
 
     <script src="script.js"></script>
 </body>
