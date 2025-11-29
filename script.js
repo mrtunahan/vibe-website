@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-rIyCim-Qwa76OekRF1JAoeLsYHkrImqorGC41sXTZNdsWtxqPfDkj2cK_RQ6Tle0/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtTnYNSe3bBsilEXRLzxM7MlmT9fffiw2HuR0JuzhWuFHyzIAH_Q6fR2xa1Ma1vkoL/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -17,7 +17,7 @@ let isExamActive = false;
 let hasAttemptedFullscreen = false;
 let userObjections = {}; // İtirazları burada tutacağız
 let studentHeartbeatInterval = null; // Kalp atışını durdurmak için bu değişken şart
-let studentLogs = [];
+
 // -----------------------------------------------------
 // BAŞLANGIÇ & EVENT LISTENERLAR
 // -----------------------------------------------------
@@ -285,7 +285,6 @@ function initializeQuiz() {
 }
 
 function showQuestion(index) {
-    logActivity("info", (index + 1) + ". Soruya geçti");
     const q = activeQuestions[index];
     const progress = ((index + 1) / activeQuestions.length) * 100;
     document.getElementById('progressBar').style.width = `${progress}%`;
@@ -792,56 +791,43 @@ function saveProgressToLocal() {
     // Öğrenci numarasına özel kayıt açıyoruz ki başkasıyla karışmasın
     localStorage.setItem(`exam_progress_${studentNumber}`, JSON.stringify(dataToSave));
 }
-// startStudentHeartbeat fonksiyonunu GÜNCELLE
-
 function startStudentHeartbeat(isWaiting = false) {
     if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
 
     studentHeartbeatInterval = setInterval(() => {
+        // Numara yoksa dur
         if (!studentNumber) return;
 
-        // ... (Mevcut kodlar: cheatStatus, soruDurumu vb.) ...
-        // BURASI ESKİ KODUN DEVAMI, DEĞİŞTİRME...
-        let cheatStatus = "Temiz"; // Örnek
-        // ...
+        // Durum Belirleme
+        let cheatStatus = "Temiz";
+        let soruDurumu = isWaiting ? "⏳ Bekliyor" : (currentQuestionIndex + 1);
 
-        // YENİ: Gönderilecek Loglar
-        // Sadece son gönderimden bu yana birikenleri göndermek bant genişliği tasarrufu sağlar
-        // Ancak basitlik için tümünü veya son 5 tanesini gönderebiliriz.
-        const logsToSend = studentLogs.slice(-10); // Son 10 hareket
+        if (!isWaiting) {
+            // Sınavdaysa kopya kontrolü yap
+            if (!isExamActive) return; // Sınav bitmişse gönderme
+            cheatStatus = document.hidden ? "Sekme Arkada!" : "Temiz";
+        } else {
+            // Bekleme odasındaysa
+            cheatStatus = "Hazır"; 
+        }
+
+        const activeObjection = (userObjections && userObjections[currentQuestionIndex]) ? "VAR" : "-";
 
         const payload = {
             type: "HEARTBEAT",
             Numara: studentNumber,
             Isim: studentName,
-            // ... (diğer alanlar aynen kalmalı)
-            Logs: JSON.stringify(logsToSend) // LOGLARI EKLİYORUZ
+            Soru: soruDurumu,
+            Kopya: cheatStatus,
+            Itiraz: isWaiting ? "-" : activeObjection
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify(payload)
-        })
-        .then(r => r.json())
-        .then(data => {
-            // YENİ: DUYURU KONTROLÜ
-            if (data.broadcastMessage && data.broadcastMessage !== "") {
-                // Eğer daha önce göstermediysek göster (localStorage kontrolü)
-                const lastMsg = localStorage.getItem('last_broadcast');
-                if (lastMsg !== data.broadcastMessage) {
-                    Swal.fire({
-                        icon: 'info',
-                        title: '📢 HOCADAN DUYURU',
-                        text: data.broadcastMessage,
-                        backdrop: `rgba(0,0,123,0.4)`
-                    });
-                    localStorage.setItem('last_broadcast', data.broadcastMessage);
-                }
-            }
-        })
-        .catch(e => console.log("Heartbeat fail"));
+        }).catch(e => console.log("Heartbeat fail"));
 
-    }, isWaiting ? 5000 : 15000);
+    }, isWaiting ? 5000 : 15000); // Beklerken 5sn, sınavda 15sn
 }
 let adminMonitorInterval = null;
 
@@ -918,6 +904,14 @@ function fetchLiveTable() {
             tr.style = rowStyle;
             // Arama fonksiyonu için class ekliyoruz
             tr.className = "student-row"; 
+            // fetchLiveTable içinde, tr oluşturulduktan hemen sonra:
+            const tr = document.createElement('tr');
+            tr.style = rowStyle;
+            tr.className = "student-row";
+
+            // 👇 BU SATIRI EKLEYİN (Tıklanınca Detay Aç)
+            tr.onclick = () => openStudentDetail(num, isim);
+            tr.style.cursor = "pointer"; // Mouse el işareti olsun
             tr.innerHTML = `
                 <td style="padding:8px;">${num}</td>
                 <td style="padding:8px; font-weight:500;">${isim}</td>
@@ -1210,96 +1204,79 @@ function selectRole(role) {
         }
     }, 400); // 0.4 sn bekle
 }
-// --- script.js EN ALTA EKLE ---
+/* --- ÖĞRENCİ DETAY FONKSİYONLARI --- */
 
-// 1. Log Kaydetme Fonksiyonu
-function logActivity(type, detail) {
-    const time = new Date().toLocaleTimeString();
-    const logEntry = { t: time, type: type, d: detail };
-    studentLogs.push(logEntry);
-    
-    // Anlık olarak yerel depolamaya da yedekle (Sayfa yenilenirse kaybolmasın)
-    localStorage.setItem(`logs_${studentNumber}`, JSON.stringify(studentLogs));
-}
+function openStudentDetail(numara, isim) {
+    const modal = document.getElementById('studentDetailModal');
+    const title = document.getElementById('detailModalTitle');
+    const loading = document.getElementById('detailLoading');
+    const body = document.getElementById('detailBody');
 
-// 2. Olay Dinleyicileri (Kopya Tespiti İçin)
-// Sekme değiştirme tespiti
-document.addEventListener("visibilitychange", () => {
-    if (isExamActive) {
-        if (document.hidden) logActivity("danger", "Sekme Değiştirdi / Alta Aldı");
-        else logActivity("info", "Sınava Geri Döndü");
-    }
-});
+    // Modalı aç ve yükleniyor göster
+    modal.classList.remove('hidden');
+    title.innerText = `${isim} (${numara})`;
+    loading.classList.remove('hidden');
+    body.classList.add('hidden');
 
-// Tam ekrandan çıkma tespiti (Mevcut kodunda varsa oraya entegre edebilirsin)
-document.addEventListener("fullscreenchange", () => {
-    if (isExamActive && !document.fullscreenElement) {
-        logActivity("danger", "Tam Ekrandan Çıktı");
-    }
-});
-// --- script.js - YÖNETİCİ FONKSİYONLARI ---
-
-// 1. DUYURU GÖNDERME
-function sendBroadcast() {
-    const msg = document.getElementById('broadcastInput').value;
-    if(!msg) return;
-
-    Swal.fire({
-        title: 'Duyuru Gönderiliyor...',
-        didOpen: () => { Swal.showLoading() }
-    });
-
+    // Backend'den veri iste
     fetch(GOOGLE_SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify({ type: "SET_BROADCAST", message: msg })
-    })
-    .then(() => {
-        Swal.fire('Başarılı', 'Duyuru öğrencilere iletiliyor.', 'success');
-        document.getElementById('broadcastInput').value = "";
-    });
-}
-
-// 2. ÖĞRENCİ LOGLARINI GÖRÜNTÜLEME (MODAL AÇMA)
-function showStudentDetails(number, name) {
-    const modal = document.getElementById('logModal');
-    const title = document.getElementById('modalTitle');
-    const body = document.getElementById('modalBody');
-
-    modal.classList.remove('hidden'); // Modalı aç
-    title.innerText = `${name} - Hareket Dökümü`;
-    body.innerHTML = '<p style="text-align:center;">Loglar getiriliyor...</p>';
-
-    // Backend'den logları çekiyoruz (Simülasyon)
-    fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ type: "GET_LOGS", Numara: number })
+        body: JSON.stringify({ type: "GET_STUDENT_DETAILS", Numara: numara })
     })
     .then(r => r.json())
     .then(data => {
-        if (!data.logs || data.logs.length === 0) {
-            body.innerHTML = '<p>Henüz kayıtlı bir hareket yok.</p>';
+        if (data.status === "error") {
+            loading.innerText = "Veri alınamadı: " + data.message;
             return;
         }
-
-        // Logları Timeline formatında yazdır
-        let html = '';
-        data.logs.forEach(log => {
-            // Log tipi danger ise kırmızı, değilse mavi
-            const colorClass = (log.type === 'danger') ? 'danger' : 'info';
-            html += `
-                <div class="log-item ${colorClass}">
-                    <div class="log-time">${log.t}</div>
-                    <div class="log-desc">${log.d}</div>
-                </div>
-            `;
-        });
-        body.innerHTML = html;
+        renderDetailView(data);
+        loading.classList.add('hidden');
+        body.classList.remove('hidden');
     })
-    .catch(() => {
-        body.innerHTML = '<p style="color:red;">Veri alınamadı. Backend desteği gerekebilir.</p>';
+    .catch(err => {
+        console.error(err);
+        loading.innerText = "Bağlantı Hatası!";
     });
 }
 
-function closeLogModal() {
-    document.getElementById('logModal').classList.add('hidden');
+function closeStudentDetail() {
+    document.getElementById('studentDetailModal').classList.add('hidden');
+}
+
+function renderDetailView(data) {
+    // İstatistikleri Doldur
+    document.getElementById('d-correct').innerText = data.stats.correct;
+    document.getElementById('d-wrong').innerText = data.stats.wrong;
+    document.getElementById('d-empty').innerText = data.stats.empty;
+    document.getElementById('d-score').innerText = data.stats.score;
+
+    // Listeyi Oluştur
+    const list = document.getElementById('detailAnswerList');
+    list.innerHTML = "";
+
+    data.answers.forEach((ans, index) => {
+        // Renk ve Etiket Belirle
+        let tagClass = "tag-wrong";
+        let tagText = "YANLIŞ";
+        let icon = "❌";
+
+        if (ans.isCorrect) {
+            tagClass = "tag-correct"; tagText = "DOĞRU"; icon = "✅";
+        } else if (ans.userAnswer === "" || ans.userAnswer === null) {
+            tagClass = ""; tagText = "BOŞ"; icon = "⭕";
+        }
+
+        const div = document.createElement('div');
+        div.className = "detail-item";
+        div.innerHTML = `
+            <div style="font-weight:600; margin-bottom:4px;">
+                ${index + 1}. Soru <span class="ans-tag ${tagClass}">${tagText}</span>
+            </div>
+            <div style="color:#666; font-size:0.85rem;">
+                Siz: <b>${ans.userAnswer || "(Boş)"}</b> 
+                ${!ans.isCorrect ? `| Doğru: <b>${ans.correctAnswer}</b>` : ""}
+            </div>
+        `;
+        list.appendChild(div);
+    });
 }

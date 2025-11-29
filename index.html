@@ -154,13 +154,6 @@
             <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
             <button onclick="adminLoginAttempt()" class="btn-primary" style="background:#374151; margin-top:10px;">Giriş</button>
         </div>
-        <div class="broadcast-box" style="margin-bottom: 20px; background: #e0f2fe; padding: 15px; border-radius: 8px; border: 1px solid #bae6fd;">
-    <h3 style="margin:0 0 10px 0; color: #0284c7; font-size: 1rem;">📢 Sınıfa Duyuru Yap</h3>
-    <div style="display:flex; gap:10px;">
-        <input type="text" id="broadcastInput" placeholder="Örn: Sınav süresi 5 dakika uzatıldı..." style="margin:0; background:white;">
-        <button onclick="sendBroadcast()" style="width:auto; margin:0; background:#0284c7;">Gönder</button>
-    </div>
-</div>
         <div id="adminControls" class="hidden">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <p style="color:green; font-weight:bold; margin:0;">✅ Yönetici Modu</p>
@@ -189,13 +182,22 @@
             <span id="stat-risk">0</span>
         </div>
     </div>
-
     <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap:10px;">
+        
         <input type="text" id="adminSearch" placeholder="Öğrenci Ara (İsim/No)..." onkeyup="filterAdminTable()" 
-               style="padding:8px; border:1px solid #ccc; border-radius:5px; width:70%; margin-bottom:0;">
+               style="padding:8px; border:1px solid #ccc; border-radius:5px; flex-grow:1; margin-bottom:0;">
+        
+        <button onclick="document.getElementById('monitorTable').classList.toggle('grid-mode')" class="btn-secondary" 
+                style="width:auto; padding:8px 15px; background:#fff; margin-top:0; white-space:nowrap;">
+                ▦ Görünüm
+        </button>
+
         <button onclick="exportTableToCSV('sinav_durumu.csv')" class="btn-secondary" 
-                style="width:30%; padding:8px; background:#fff; margin-top:0;">📥 Excel İndir</button>
+                style="width:auto; padding:8px 15px; background:#fff; margin-top:0; white-space:nowrap;">
+                📥 Excel İndir
+        </button>
     </div>
+   
 
     <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:10px; height:300px; overflow-y:auto;">
         <table id="monitorTable" style="width:100%; border-collapse: collapse; font-size:0.9rem;">
@@ -231,12 +233,28 @@
     
 
     <script src="script.js"></script>
-    <div id="logModal" class="modal hidden">
+    <div id="studentDetailModal" class="modal hidden">
     <div class="modal-content">
-        <span class="close-modal" onclick="closeLogModal()">&times;</span>
-        <h2 id="modalTitle">Öğrenci Logları</h2>
-        <div id="modalBody" class="log-timeline">
-            <p>Veri yükleniyor...</p>
+        <div class="modal-header">
+            <h2 id="detailModalTitle">Öğrenci Detayı</h2>
+            <span class="close-btn" onclick="closeStudentDetail()">×</span>
+        </div>
+        
+        <div id="detailLoading" style="text-align:center; padding:20px;">
+            Yükleniyor...
+        </div>
+
+        <div id="detailBody" class="hidden">
+            <div class="detail-stats">
+                <div class="d-stat correct">✅ <span id="d-correct">0</span> Doğru</div>
+                <div class="d-stat wrong">❌ <span id="d-wrong">0</span> Yanlış</div>
+                <div class="d-stat empty">⭕ <span id="d-empty">0</span> Boş</div>
+                <div class="d-stat score">⭐ <span id="d-score">0</span> Puan</div>
+            </div>
+            
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+
+            <div id="detailAnswerList" class="detail-list"></div>
         </div>
     </div>
 </div>

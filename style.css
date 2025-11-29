@@ -575,36 +575,83 @@ body.dark-mode .tool-btn.active {
         grid-template-columns: 1fr;
     }
 }
-/* style.css EN ALTA EKLE */
+/* Grid Modu Stilleri */
+.grid-mode thead { display: none; } /* Başlıkları gizle */
+.grid-mode tbody {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify_content: center;
+}
+.grid-mode tr {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    width: 120px; /* Kutu genişliği */
+    height: 140px;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+.grid-mode tr:hover { transform: scale(1.05); z-index: 10; }
+.grid-mode td { display: block; width: 100%; padding: 2px !important; border: none !important; }
 
-/* --- MODAL (POPUP) STİLLERİ --- */
+/* İsimleri ve Numaraları vurgula */
+.grid-mode td:nth-child(2) { font-weight: bold; font-size: 0.9rem; height: 40px; overflow: hidden; } /* İsim */
+.grid-mode td:nth-child(1) { color: #666; font-size: 0.8rem; } /* Numara */
+/* --- ÖĞRENCİ DETAY MODAL --- */
 .modal {
-    position: fixed; z-index: 10000; left: 0; top: 0;
-    width: 100%; height: 100%; overflow: auto;
-    background-color: rgba(0,0,0,0.5); /* Siyah Transparan Arka Plan */
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); z-index: 2000;
     display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(3px); /* Arkadaki yazıları bulanıklaştırır */
 }
+
 .modal-content {
-    background-color: #fefefe; padding: 25px; border-radius: 15px;
-    width: 90%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    position: relative; max-height: 80vh; overflow-y: auto;
+    background: #fff; width: 90%; max-width: 500px;
+    border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden; animation: slideUp 0.3s ease-out;
 }
-.close-modal {
-    position: absolute; top: 15px; right: 20px;
-    color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer;
-}
-.close-modal:hover { color: #000; }
 
-/* --- LOG TIMELINE (ZAMAN ÇİZELGESİ) --- */
-.log-timeline { margin-top: 20px; border-left: 2px solid #e5e7eb; padding-left: 20px; }
-.log-item { position: relative; margin-bottom: 20px; }
-.log-item::before {
-    content: ''; position: absolute; left: -26px; top: 5px;
-    width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;
-    border: 2px solid #fff;
+.modal-header {
+    background: #f9fafb; padding: 15px 20px; border-bottom: 1px solid #e5e7eb;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.log-item.danger::before { background: #ef4444; } /* Kırmızı nokta */
-.log-item.info::before { background: #3b82f6; }   /* Mavi nokta */
+.modal-header h2 { margin: 0; font-size: 1.2rem; color: #1f2937; }
 
-.log-time { font-size: 0.8rem; color: #6b7280; font-weight: 600; }
-.log-desc { font-size: 0.95rem; color: #1f2937; margin-top: 2px; }
+.close-btn {
+    font-size: 2rem; cursor: pointer; color: #9ca3af; line-height: 20px;
+}
+.close-btn:hover { color: #ef4444; }
+
+/* Özet Kutuları */
+.detail-stats { display: flex; gap: 10px; justify-content: space-between; padding: 15px 20px 0; }
+.d-stat { font-size: 0.9rem; font-weight: 700; }
+.d-stat.correct { color: #059669; }
+.d-stat.wrong { color: #dc2626; }
+.d-stat.empty { color: #d97706; }
+.d-stat.score { color: #4F46E5; }
+
+/* Liste Alanı */
+.detail-list {
+    max-height: 60vh; overflow-y: auto; padding: 15px 20px;
+}
+.detail-item {
+    padding: 10px; border-bottom: 1px solid #f3f4f6; font-size: 0.9rem;
+}
+.detail-item:last-child { border-bottom: none; }
+.ans-tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; 
+    font-size: 0.75rem; font-weight: bold; margin-left: 5px;
+}
+.tag-correct { background: #d1fae5; color: #065f46; }
+.tag-wrong { background: #fee2e2; color: #991b1b; }
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
