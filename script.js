@@ -17,7 +17,7 @@ let isExamActive = false;
 let hasAttemptedFullscreen = false;
 let userObjections = {}; // İtirazları burada tutacağız
 let studentHeartbeatInterval = null; // Kalp atışını durdurmak için bu değişken şart
-
+let studentLogs = [];
 // -----------------------------------------------------
 // BAŞLANGIÇ & EVENT LISTENERLAR
 // -----------------------------------------------------
@@ -285,6 +285,7 @@ function initializeQuiz() {
 }
 
 function showQuestion(index) {
+    logActivity("info", (index + 1) + ". Soruya geçti");
     const q = activeQuestions[index];
     const progress = ((index + 1) / activeQuestions.length) * 100;
     document.getElementById('progressBar').style.width = `${progress}%`;
@@ -791,43 +792,56 @@ function saveProgressToLocal() {
     // Öğrenci numarasına özel kayıt açıyoruz ki başkasıyla karışmasın
     localStorage.setItem(`exam_progress_${studentNumber}`, JSON.stringify(dataToSave));
 }
+// startStudentHeartbeat fonksiyonunu GÜNCELLE
+
 function startStudentHeartbeat(isWaiting = false) {
     if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
 
     studentHeartbeatInterval = setInterval(() => {
-        // Numara yoksa dur
         if (!studentNumber) return;
 
-        // Durum Belirleme
-        let cheatStatus = "Temiz";
-        let soruDurumu = isWaiting ? "⏳ Bekliyor" : (currentQuestionIndex + 1);
+        // ... (Mevcut kodlar: cheatStatus, soruDurumu vb.) ...
+        // BURASI ESKİ KODUN DEVAMI, DEĞİŞTİRME...
+        let cheatStatus = "Temiz"; // Örnek
+        // ...
 
-        if (!isWaiting) {
-            // Sınavdaysa kopya kontrolü yap
-            if (!isExamActive) return; // Sınav bitmişse gönderme
-            cheatStatus = document.hidden ? "Sekme Arkada!" : "Temiz";
-        } else {
-            // Bekleme odasındaysa
-            cheatStatus = "Hazır"; 
-        }
-
-        const activeObjection = (userObjections && userObjections[currentQuestionIndex]) ? "VAR" : "-";
+        // YENİ: Gönderilecek Loglar
+        // Sadece son gönderimden bu yana birikenleri göndermek bant genişliği tasarrufu sağlar
+        // Ancak basitlik için tümünü veya son 5 tanesini gönderebiliriz.
+        const logsToSend = studentLogs.slice(-10); // Son 10 hareket
 
         const payload = {
             type: "HEARTBEAT",
             Numara: studentNumber,
             Isim: studentName,
-            Soru: soruDurumu,
-            Kopya: cheatStatus,
-            Itiraz: isWaiting ? "-" : activeObjection
+            // ... (diğer alanlar aynen kalmalı)
+            Logs: JSON.stringify(logsToSend) // LOGLARI EKLİYORUZ
         };
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify(payload)
-        }).catch(e => console.log("Heartbeat fail"));
+        })
+        .then(r => r.json())
+        .then(data => {
+            // YENİ: DUYURU KONTROLÜ
+            if (data.broadcastMessage && data.broadcastMessage !== "") {
+                // Eğer daha önce göstermediysek göster (localStorage kontrolü)
+                const lastMsg = localStorage.getItem('last_broadcast');
+                if (lastMsg !== data.broadcastMessage) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: '📢 HOCADAN DUYURU',
+                        text: data.broadcastMessage,
+                        backdrop: `rgba(0,0,123,0.4)`
+                    });
+                    localStorage.setItem('last_broadcast', data.broadcastMessage);
+                }
+            }
+        })
+        .catch(e => console.log("Heartbeat fail"));
 
-    }, isWaiting ? 5000 : 15000); // Beklerken 5sn, sınavda 15sn
+    }, isWaiting ? 5000 : 15000);
 }
 let adminMonitorInterval = null;
 
@@ -867,8 +881,14 @@ function fetchLiveTable() {
         const tbody = document.getElementById('liveTableBody');
         tbody.innerHTML = ""; // Tabloyu temizle
 
+        // --- İSTATİSTİK SAYAÇLARI (YENİ) ---
+        let countActive = 0;
+        let countFinished = 0;
+        let countRisk = 0;
+
         if (rows.length === 0) {
             tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; padding:15px;'>Aktif öğrenci yok.</td></tr>";
+            updateStats(0, 0, 0); // Sıfırla
             return;
         }
 
@@ -876,39 +896,106 @@ function fetchLiveTable() {
             // Row yapısı: [Numara, İsim, Zaman, SoruNo, Kopya, İtiraz]
             const [num, isim, zaman, soru, kopya, itiraz] = row;
             
-            // Kopya şüphesi varsa satırı kırmızı yap
-            // --- RENKLENDİRME MANTIĞI (GÜNCELLENDİ) ---
-            let rowStyle = "border-bottom:1px solid #eee;"; // Varsayılan (Beyaz/Gri)
+            let rowStyle = "border-bottom:1px solid #eee;";
             let durumIkon = "🟢 Aktif";
 
+            // Durum Analizi ve Sayım
             if (kopya.includes("KOPYA") || kopya.includes("DİKKAT")) {
-                // KOPYA DURUMU (KIRMIZI)
                 rowStyle = "background:#fee2e2; color:#b91c1c; font-weight:bold;";
-                durumIkon = "⚠️ DİKKAT";
+                durumIkon = "⚠️ RİSK";
+                countRisk++;
             } 
-            else if (kopya.includes("TAMAMLANDI")) {
-                // BİTİRME DURUMU (YEŞİL/MAVİ)
-                rowStyle = "background:#ecfdf5; color:#047857; font-weight:bold;"; // Açık yeşil zemin, koyu yeşil yazı
-                durumIkon = "BİTTİ";
+            else if (kopya.includes("TAMAMLANDI") || soru === "BİTTİ") {
+                rowStyle = "background:#ecfdf5; color:#047857; font-weight:bold;";
+                durumIkon = "🏁 BİTTİ";
+                countFinished++;
+            } else {
+                // Normal Aktif
+                countActive++;
             }
-            // -------------------------------------------
             
             const tr = document.createElement('tr');
             tr.style = rowStyle;
+            // Arama fonksiyonu için class ekliyoruz
+            tr.className = "student-row"; 
             tr.innerHTML = `
                 <td style="padding:8px;">${num}</td>
-                <td style="padding:8px;">${isim}</td>
+                <td style="padding:8px; font-weight:500;">${isim}</td>
                 <td style="padding:8px;">${durumIkon}</td>
-                <td style="padding:8px; text-align:center;">${soru === "BİTTİ" ? "-" : soru + ". Soru"}</td>
+                <td style="padding:8px; text-align:center;">${soru === "BİTTİ" ? "Tamamlandı" : soru}</td>
                 <td style="padding:8px; text-align:center;">${itiraz !== "-" ? "🚩 VAR" : "-"}</td>
             `;
-            // Son aktiflik zamanına göre "Online/Offline" kararı (Basit mantık)
-            // (Apps Script zamanı metin gönderdiği için burada basit ikon kullanacağız)
-            
             tbody.appendChild(tr);
         });
+
+        // İstatistikleri Güncelle
+        updateStats(countActive, countFinished, countRisk);
+        
+        // Eğer arama kutusunda yazı varsa filtrelemeyi tekrar uygula (Tablo yenilenince filtre bozulmasın)
+        filterAdminTable();
     })
     .catch(err => console.error("Admin Monitor Error:", err));
+}
+
+// --- YENİ YARDIMCI FONKSİYONLAR ---
+
+// 1. İstatistikleri Ekrana Yazar
+function updateStats(active, finished, risk) {
+    document.getElementById('stat-active').innerText = active;
+    document.getElementById('stat-finished').innerText = finished;
+    document.getElementById('stat-risk').innerText = risk;
+}
+
+// 2. Tabloda Arama Yapar
+function filterAdminTable() {
+    const input = document.getElementById("adminSearch");
+    const filter = input.value.toUpperCase();
+    const rows = document.getElementsByClassName("student-row");
+
+    for (let i = 0; i < rows.length; i++) {
+        // İsim (2. sütun) ve Numara (1. sütun) içinde ara
+        const numCol = rows[i].getElementsByTagName("td")[0];
+        const nameCol = rows[i].getElementsByTagName("td")[1];
+        
+        if (numCol || nameCol) {
+            const numText = numCol.textContent || numCol.innerText;
+            const nameText = nameCol.textContent || nameCol.innerText;
+            
+            if (numText.toUpperCase().indexOf(filter) > -1 || nameText.toUpperCase().indexOf(filter) > -1) {
+                rows[i].style.display = "";
+            } else {
+                rows[i].style.display = "none";
+            }
+        }       
+    }
+}
+
+// 3. Tabloyu Excel (CSV) Olarak İndirir
+function exportTableToCSV(filename) {
+    const csv = [];
+    const rows = document.querySelectorAll("#monitorTable tr");
+    
+    // Sadece görünür satırları al (Filtreleme varsa ona uyar)
+    for (let i = 0; i < rows.length; i++) {
+        const row = [], cols = rows[i].querySelectorAll("td, th");
+        
+        // Eğer satır gizliyse (arama yapılmışsa) CSV'ye ekleme
+        if(rows[i].style.display === 'none') continue;
+
+        for (let j = 0; j < cols.length; j++) 
+            row.push('"' + cols[j].innerText + '"'); // Tırnak içine al ki CSV bozulmasın
+        
+        csv.push(row.join(","));        
+    }
+
+    // Dosyayı oluştur ve indir
+    const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+    const downloadLink = document.createElement("a");
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
 }
 // --- Sınav Başlatma Kontrolü ---
 
@@ -1122,4 +1209,97 @@ function selectRole(role) {
             document.getElementById('adminControls').classList.add('hidden');
         }
     }, 400); // 0.4 sn bekle
+}
+// --- script.js EN ALTA EKLE ---
+
+// 1. Log Kaydetme Fonksiyonu
+function logActivity(type, detail) {
+    const time = new Date().toLocaleTimeString();
+    const logEntry = { t: time, type: type, d: detail };
+    studentLogs.push(logEntry);
+    
+    // Anlık olarak yerel depolamaya da yedekle (Sayfa yenilenirse kaybolmasın)
+    localStorage.setItem(`logs_${studentNumber}`, JSON.stringify(studentLogs));
+}
+
+// 2. Olay Dinleyicileri (Kopya Tespiti İçin)
+// Sekme değiştirme tespiti
+document.addEventListener("visibilitychange", () => {
+    if (isExamActive) {
+        if (document.hidden) logActivity("danger", "Sekme Değiştirdi / Alta Aldı");
+        else logActivity("info", "Sınava Geri Döndü");
+    }
+});
+
+// Tam ekrandan çıkma tespiti (Mevcut kodunda varsa oraya entegre edebilirsin)
+document.addEventListener("fullscreenchange", () => {
+    if (isExamActive && !document.fullscreenElement) {
+        logActivity("danger", "Tam Ekrandan Çıktı");
+    }
+});
+// --- script.js - YÖNETİCİ FONKSİYONLARI ---
+
+// 1. DUYURU GÖNDERME
+function sendBroadcast() {
+    const msg = document.getElementById('broadcastInput').value;
+    if(!msg) return;
+
+    Swal.fire({
+        title: 'Duyuru Gönderiliyor...',
+        didOpen: () => { Swal.showLoading() }
+    });
+
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "SET_BROADCAST", message: msg })
+    })
+    .then(() => {
+        Swal.fire('Başarılı', 'Duyuru öğrencilere iletiliyor.', 'success');
+        document.getElementById('broadcastInput').value = "";
+    });
+}
+
+// 2. ÖĞRENCİ LOGLARINI GÖRÜNTÜLEME (MODAL AÇMA)
+function showStudentDetails(number, name) {
+    const modal = document.getElementById('logModal');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+
+    modal.classList.remove('hidden'); // Modalı aç
+    title.innerText = `${name} - Hareket Dökümü`;
+    body.innerHTML = '<p style="text-align:center;">Loglar getiriliyor...</p>';
+
+    // Backend'den logları çekiyoruz (Simülasyon)
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "GET_LOGS", Numara: number })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.logs || data.logs.length === 0) {
+            body.innerHTML = '<p>Henüz kayıtlı bir hareket yok.</p>';
+            return;
+        }
+
+        // Logları Timeline formatında yazdır
+        let html = '';
+        data.logs.forEach(log => {
+            // Log tipi danger ise kırmızı, değilse mavi
+            const colorClass = (log.type === 'danger') ? 'danger' : 'info';
+            html += `
+                <div class="log-item ${colorClass}">
+                    <div class="log-time">${log.t}</div>
+                    <div class="log-desc">${log.d}</div>
+                </div>
+            `;
+        });
+        body.innerHTML = html;
+    })
+    .catch(() => {
+        body.innerHTML = '<p style="color:red;">Veri alınamadı. Backend desteği gerekebilir.</p>';
+    });
+}
+
+function closeLogModal() {
+    document.getElementById('logModal').classList.add('hidden');
 }

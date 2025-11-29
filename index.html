@@ -154,6 +154,13 @@
             <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
             <button onclick="adminLoginAttempt()" class="btn-primary" style="background:#374151; margin-top:10px;">Giriş</button>
         </div>
+        <div class="broadcast-box" style="margin-bottom: 20px; background: #e0f2fe; padding: 15px; border-radius: 8px; border: 1px solid #bae6fd;">
+    <h3 style="margin:0 0 10px 0; color: #0284c7; font-size: 1rem;">📢 Sınıfa Duyuru Yap</h3>
+    <div style="display:flex; gap:10px;">
+        <input type="text" id="broadcastInput" placeholder="Örn: Sınav süresi 5 dakika uzatıldı..." style="margin:0; background:white;">
+        <button onclick="sendBroadcast()" style="width:auto; margin:0; background:#0284c7;">Gönder</button>
+    </div>
+</div>
         <div id="adminControls" class="hidden">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <p style="color:green; font-weight:bold; margin:0;">✅ Yönetici Modu</p>
@@ -168,26 +175,48 @@
     </div>
 
     <div id="tab-monitor">
-        <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:10px; height:300px; overflow-y:auto;">
-            <table style="width:100%; border-collapse: collapse; font-size:0.9rem;">
-                <thead>
-                    <tr style="background:#e5e7eb; text-align:left;">
-                        <th style="padding:8px;">No</th>
-                        <th style="padding:8px;">Öğrenci</th>
-                        <th style="padding:8px;">Durum</th>
-                        <th style="padding:8px;">Soru</th>
-                        <th style="padding:8px;">İtiraz</th>
-                    </tr>
-                </thead>
-                <tbody id="liveTableBody">
-                    <tr><td colspan="5" style="text-align:center; padding:20px;">Veri bekleniyor...</td></tr>
-                </tbody>
-            </table>
+    <div class="stats-grid">
+        <div class="stat-card" style="background: #3b82f6;">
+            <h3>Aktif</h3>
+            <span id="stat-active">0</span>
         </div>
-        <div style="margin-top:10px; font-size:0.8rem; color:#666;">
-            * Liste her 10 saniyede bir yenilenir. <span style="color:red;">Kırmızı</span>: Kopya şüphesi.
+        <div class="stat-card" style="background: #10b981;">
+            <h3>Bitiren</h3>
+            <span id="stat-finished">0</span>
+        </div>
+        <div class="stat-card" style="background: #ef4444;">
+            <h3>Kopya/Risk</h3>
+            <span id="stat-risk">0</span>
         </div>
     </div>
+
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap:10px;">
+        <input type="text" id="adminSearch" placeholder="Öğrenci Ara (İsim/No)..." onkeyup="filterAdminTable()" 
+               style="padding:8px; border:1px solid #ccc; border-radius:5px; width:70%; margin-bottom:0;">
+        <button onclick="exportTableToCSV('sinav_durumu.csv')" class="btn-secondary" 
+                style="width:30%; padding:8px; background:#fff; margin-top:0;">📥 Excel İndir</button>
+    </div>
+
+    <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:10px; height:300px; overflow-y:auto;">
+        <table id="monitorTable" style="width:100%; border-collapse: collapse; font-size:0.9rem;">
+            <thead>
+                <tr style="background:#e5e7eb; text-align:left;">
+                    <th style="padding:8px;">No</th>
+                    <th style="padding:8px;">Öğrenci</th>
+                    <th style="padding:8px;">Durum</th>
+                    <th style="padding:8px;">Soru</th>
+                    <th style="padding:8px;">İtiraz</th>
+                </tr>
+            </thead>
+            <tbody id="liveTableBody">
+                <tr><td colspan="5" style="text-align:center; padding:20px;">Veri bekleniyor...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div style="margin-top:10px; font-size:0.8rem; color:#666;">
+        * Liste her 10 saniyede bir yenilenir. <span style="color:red;">Kırmızı</span>: Kopya şüphesi.
+    </div>
+</div>
 
     <div id="tab-questions" class="hidden">
         <button onclick="deleteQuestions()" style="background:#ef4444; color:white;">🗑️ Tüm Soruları Sil</button>
@@ -202,5 +231,14 @@
     
 
     <script src="script.js"></script>
+    <div id="logModal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeLogModal()">&times;</span>
+        <h2 id="modalTitle">Öğrenci Logları</h2>
+        <div id="modalBody" class="log-timeline">
+            <p>Veri yükleniyor...</p>
+        </div>
+    </div>
+</div>
 </body>
 </html>
