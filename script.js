@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxtTnYNSe3bBsilEXRLzxM7MlmT9fffiw2HuR0JuzhWuFHyzIAH_Q6fR2xa1Ma1vkoL/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbykbPfENka1ffR9KNkJk_YyWWg6k1rqUMCYmfkO_swHXrG99TrFw7wZPwa_nfLWkx8/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -593,7 +593,9 @@ function finishQuiz(type) {
         Numara: studentNumber,
         Puan: score,
         Durum: statusNote,
-        Itirazlar: itirazMetni
+        Itirazlar: itirazMetni,
+        // 👇 BU SATIRI KESİNLİKLE EKLEMELİSİNİZ 👇
+        Cevaplar: userAnswers 
     });
     
     // LocalStorage Temizliği
@@ -904,8 +906,6 @@ function fetchLiveTable() {
             tr.style = rowStyle;
             // Arama fonksiyonu için class ekliyoruz
             tr.className = "student-row"; 
-            // fetchLiveTable içinde, tr oluşturulduktan hemen sonra:
-            const tr = document.createElement('tr');
             tr.style = rowStyle;
             tr.className = "student-row";
 
@@ -1185,24 +1185,22 @@ function selectRole(role) {
     const loginScreen = document.getElementById('loginScreen');
     const adminPanel = document.getElementById('adminPanel');
 
-    // Yumuşak geçiş efekti
+    // Opaklığı düşür
     landing.style.opacity = '0';
-    landing.style.transition = 'opacity 0.4s ease';
-
+    
+    // CSS transition süresi (0.4s) bittikten sonra gizle
     setTimeout(() => {
-        landing.classList.add('hidden'); // Landing sayfasını tamamen kaldır
+        landing.classList.add('hidden'); // display: none ekler
+        landing.style.display = 'none'; // Garanti olsun diye inline stil de ekleyelim
         
         if (role === 'student') {
-            // Öğrenci seçildiyse Numara Girme Ekranını aç
             loginScreen.classList.remove('hidden');
         } else if (role === 'teacher') {
-            // Öğretmen seçildiyse Admin Girişini aç
-            // Önce adminPanel'i görünür yap, sonra login kısmını göster
             adminPanel.classList.remove('hidden');
             document.getElementById('adminLogin').classList.remove('hidden');
             document.getElementById('adminControls').classList.add('hidden');
         }
-    }, 400); // 0.4 sn bekle
+    }, 400); 
 }
 /* --- ÖĞRENCİ DETAY FONKSİYONLARI --- */
 
