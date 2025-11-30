@@ -473,48 +473,60 @@ function confirmFinishQuiz() {
     });
 }
 
-// script.js dosyasındaki finishQuiz fonksiyonunu tamamen bununla değiştir:
+// script.js dosyasındaki finishQuiz fonksiyonunu tamamen bununla değiştirin:
 
 function finishQuiz(type) {
     if (!isExamActive) return;
-    isExamActive = false; // Sınavı pasife çek (Böylece normal kalp atışı durur)
+    isExamActive = false; // Sınavı pasife çek
     
     clearInterval(examTimerInterval);
-    if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval); // <-- YENİ EKLENEN SATIR
-    
+    if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
     if(hintTimeout) clearTimeout(hintTimeout);
     if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 
+    let correctCount = 0; // Doğru sayısını tut
     
-
-    let score = 0;
-    const pts = 100 / activeQuestions.length;
-
-    // Puanlama Mantığı
+    // --- PUANLAMA MANTIĞI ---
     activeQuestions.forEach((q, i) => {
-        if(type.startsWith("CHEATING")) return;
+        if(type.startsWith("CHEATING")) return; // Kopya ise puan hesaplama
 
-        const correct = deobfuscateAnswer(q._secureAnswer);
-        const user = userAnswers[i];
+        // Şifreli doğru cevabı çöz
+        const correctVal = deobfuscateAnswer(q._secureAnswer);
+        const userVal = userAnswers[i]; // Öğrencinin cevabı
+        
         let isOk = false;
 
-        if (q.type === 'text') {
-            isOk = (user && user.toLowerCase() === correct.toLowerCase());
-        } else if (q.type === 'checkbox') {
-             isOk = (user === correct); 
-        } else {
-            isOk = (user === correct);
+        // Kontrol: İkisi de boş değilse karşılaştır
+        if (userVal !== null && userVal !== undefined && correctVal !== null && correctVal !== undefined) {
+            // Hepsini String'e çevir, boşlukları sil ve küçük harfe dönüştür.
+            // Bu sayede:
+            // 1. "Ankara" ile "ankara " eşit sayılır (Açık uçlu soru için)
+            // 2. "1" ile 1 eşit sayılır (Test sorusu için)
+            const uStr = userVal.toString().trim().toLowerCase();
+            const cStr = correctVal.toString().trim().toLowerCase();
+            
+            // Eğer cevap "text" ise (Hoca excel'e cevap yazmamışsa) otomatik doğru sayma, 
+            // ama hoca cevabı "Paris" girdiyse ve öğrenci "Paris" yazdıysa doğru say.
+            if (uStr === cStr) {
+                isOk = true;
+            }
         }
 
-        if (isOk) score += pts;
+        if (isOk) correctCount++;
     });
 
-    score = Math.round(score);
+    // --- DİNAMİK PUAN HESABI ---
+    // Soru sayısı kaç olursa olsun (5, 10, 25, 50...) puanı 100 üzerinden hesaplar.
+    let totalQuestions = activeQuestions.length;
+    let score = 0;
+    
+    if (totalQuestions > 0) {
+        score = Math.round((correctCount / totalQuestions) * 100);
+    }
 
-    // Ekran Değişimi (Animasyonlu)
+    // Ekran Değişimi
     document.getElementById('quizScreen').classList.add('hidden');
-    const resultScreen = document.getElementById('resultScreen');
-    resultScreen.classList.remove('hidden');
+    document.getElementById('resultScreen').classList.remove('hidden');
     
     const scoreCard = document.querySelector('.score-card');
     if(scoreCard) scoreCard.classList.add('score-pop-animation');
@@ -523,18 +535,16 @@ function finishQuiz(type) {
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
 
-    // Durum Belirleme ve Feedback
+    // Feedback Mesajı
     const fb = document.getElementById('feedbackMessage');
     let statusNote = "NORMAL";
 
-    // --- SİNYAL GÖNDERME MANTIĞI ---
     if (type.startsWith("CHEATING")) {
-        // 1. KOPYA DURUMU
         fb.innerHTML = "⚠️ KOPYA GİRİŞİMİ - SINAV İPTAL";
         fb.style.color = "red";
         statusNote = "KOPYA";
-
-        // Hoca Paneline "KOPYA" sinyali gönder
+        
+        // Backend'e Kopya Sinyali
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -545,22 +555,19 @@ function finishQuiz(type) {
                 Kopya: "⚠️ KOPYA TESPİTİ",
                 Itiraz: "-"
             })
-        }).catch(err => console.log("Kopya sinyali hatası"));
+        }).catch(err => console.log("Sinyal hatası"));
 
     } else {
-        // 2. NORMAL BİTİŞ DURUMU
         if (score >= 50) {
             fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
             fb.style.color = "green";
-            // Konfeti
-             if (window.confetti) {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
+            if (window.confetti) confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
         } else {
             fb.innerHTML = "Kaldınız.";
+            fb.style.color = "red";
         }
-
-        // Hoca Paneline "BİTTİ" sinyali gönder (BU KISIM EKSİKTİ)
+        
+        // Backend'e Bitiş Sinyali
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -568,10 +575,10 @@ function finishQuiz(type) {
                 Numara: studentNumber,
                 Isim: studentName,
                 Soru: "BİTTİ",
-                Kopya: "TAMAMLANDI", // Bu metin paneli Yeşil yapar
+                Kopya: "TAMAMLANDI",
                 Itiraz: "-"
             })
-        }).catch(err => console.log("Bitiş sinyali hatası"));
+        }).catch(err => console.log("Sinyal hatası"));
     }
 
     generateReviewPanel();
@@ -586,7 +593,7 @@ function finishQuiz(type) {
     }
     if(itirazMetni === "") itirazMetni = "-";
 
-    // Sonucu Kaydet (Google Sheet)
+    // SONUCU KAYDET (Cevaplar dizisini göndermeyi unutmuyoruz)
     sendToGoogleSheets({
         type: "RESULT",
         Isim: studentName,
@@ -594,11 +601,9 @@ function finishQuiz(type) {
         Puan: score,
         Durum: statusNote,
         Itirazlar: itirazMetni,
-        // 👇 BU SATIRI KESİNLİKLE EKLEMELİSİNİZ 👇
         Cevaplar: userAnswers 
     });
     
-    // LocalStorage Temizliği
     localStorage.removeItem(`exam_progress_${studentNumber}`);
 }
 
