@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwvhNX1Z2XwVLsKn6RCPwRFNULRWM-GRYkwdiot4t6mq9ZlDEb7mHV6baHea8XDpvCL/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybRSc2_ZsGEJuOma2sQKDAMyxnh8ogYntVCuy-PJdtwIf_YHezpBjvOL5MEL0auGhQ/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -1216,18 +1216,16 @@ function closeStudentDetail() {
 }
 
 function renderDetailView(data) {
-    // İstatistikleri Doldur
+    const list = document.getElementById('detailAnswerList');
+    list.innerHTML = "";
+
+    // İstatistikler (Frontend hesabı değil, Backend'den gelen güvenilir veri)
     document.getElementById('d-correct').innerText = data.stats.correct;
     document.getElementById('d-wrong').innerText = data.stats.wrong;
     document.getElementById('d-empty').innerText = data.stats.empty;
     document.getElementById('d-score').innerText = data.stats.score;
 
-    // Listeyi Oluştur
-    const list = document.getElementById('detailAnswerList');
-    list.innerHTML = "";
-
     data.answers.forEach((ans, index) => {
-        // Renk ve Etiket Belirle
         let tagClass = "tag-wrong";
         let tagText = "YANLIŞ";
         let icon = "❌";
@@ -1240,14 +1238,25 @@ function renderDetailView(data) {
 
         const div = document.createElement('div');
         div.className = "detail-item";
+        
+        // --- GÖRSEL DÜZENLEME: SORU METNİNİ EKLEDİK ---
         div.innerHTML = `
-            <div style="font-weight:600; margin-bottom:4px;">
-                ${index + 1}. Soru <span class="ans-tag ${tagClass}">${tagText}</span>
+            <div style="font-weight:700; margin-bottom:6px; font-size: 0.95rem; color:#1f2937;">
+                <span style="color:#4F46E5;">${index + 1}.</span> ${ans.questionText || "Soru Metni Yok"}
             </div>
-            <div style="color:#666; font-size:0.85rem;">
-                Siz: <b>${ans.userAnswer || "(Boş)"}</b> 
-                ${!ans.isCorrect ? `| Doğru: <b>${ans.correctAnswer}</b>` : ""}
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f9fafb; padding:8px; border-radius:6px; font-size:0.85rem;">
+                <div>
+                    <span style="color:#666;">Siz:</span> 
+                    <strong style="color:${ans.isCorrect ? 'green' : 'red'}">${ans.userAnswer || "(Boş)"}</strong>
+                </div>
+                <span class="ans-tag ${tagClass}">${tagText}</span>
             </div>
+            
+            ${!ans.isCorrect ? `
+            <div style="margin-top:4px; font-size:0.85rem; color:#059669; padding-left:8px;">
+                ✅ Doğru Cevap: <b>${ans.correctAnswer}</b>
+            </div>` : ''}
         `;
         list.appendChild(div);
     });
