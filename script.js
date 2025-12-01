@@ -190,6 +190,8 @@ async function startQuizAttempt() {
 // -----------------------------------------------------
 // SINAV MANTIĞI
 // -----------------------------------------------------
+// script.js dosyasındaki initializeQuiz fonksiyonunu bununla değiştirin:
+
 function initializeQuiz() {
     if (!questionsSource || questionsSource.length === 0) {
         Swal.fire('Uyarı', 'Sistemde soru bulunamadı. Lütfen yönetici panelinden soru yükleyin.', 'warning');
@@ -198,66 +200,54 @@ function initializeQuiz() {
 
     isExamActive = true;
     
-    // Soruları karıştır
-    const shuffledQuestions = shuffleArray([...questionsSource]);
+    // --- 1. ORİJİNAL SIRAYI KAYDET ---
+    // Soruları karıştırmadan önce, her birinin Excel'deki sırasını (i) içine kaydediyoruz.
+    const questionsWithIndex = questionsSource.map((q, i) => {
+        return { ...q, originalIndex: i };
+    });
+
+    // --- 2. KARIŞTIRMAYI AÇ ---
+    // Artık güvenle karıştırabiliriz, çünkü kimlikleri (originalIndex) üzerinde.
+    const shuffledQuestions = shuffleArray([...questionsWithIndex]);
 
     activeQuestions = shuffledQuestions.map(q => {
-        // 1. Şıkları karıştırırken orijinal sıralarını koru
-        // (Şıkların metnini ve orijinal sırasını tutuyoruz)
+        // Şıkları karıştırma mantığı (Değişmedi)
         const optionsWithIndex = (q.options || []).map((opt, idx) => ({ val: opt, originalIdx: idx }));
-        const shuffledOptionsMap = shuffleArray(optionsWithIndex);
-        const finalOptions = shuffledOptionsMap.map(o => o.val);
+        // İsterseniz şıkları da karıştırabilirsiniz, burada orijinal sırayı koruyoruz:
+        const finalOptions = q.options; 
 
-        let newAnswerIndex = -1; // Varsayılan: Bulunamadı
-
-        // CEVAP BULMA MANTIĞI (GÜNCELLENDİ)
+        // Cevap İndeksini Bul
+        let newAnswerIndex = -1;
         const excelAnswer = (q.answer || "").toString().trim();
 
         if (q.type === 'text') {
-            // Klasik soruysa cevabı direkt al
             newAnswerIndex = excelAnswer;
-        } 
-        else {
-            // TEST SORUSU İSE:
-            
-            // YÖNTEM A: Eğer Excel'e "Ankara" yazıldıysa (Metin eşleştirme)
-            // Karıştırılmış şıkların içinde "Ankara" yazısını arıyoruz
-            let textMatchIndex = finalOptions.findIndex(opt => opt.toLowerCase() === excelAnswer.toLowerCase());
-
-            if (textMatchIndex !== -1) {
-                // Eşleşme bulundu! (Örn: Ankara şıkkı şu an 2. sırada)
-                newAnswerIndex = textMatchIndex;
-            } 
-            else {
-                // YÖNTEM B: Eğer Excel'e "2" veya "B" yazıldıysa (İndex eşleştirme)
-                // Orijinal Excel sırasına göre hangi şıkkın doğru olduğunu bul
-                
-                // Harf çevirimi (A=0, B=1...)
-                let originalIndex = -1;
-                if(["a","b","c","d","e"].includes(excelAnswer.toLowerCase())) {
-                     originalIndex = excelAnswer.toLowerCase().charCodeAt(0) - 97;
-                } else if (!isNaN(excelAnswer)) {
-                     // Sayı ise (1,2,3 -> 0,1,2 yap)
-                     originalIndex = parseInt(excelAnswer) - 1; 
-                }
-
-                // Şimdi bu orijinal indeksin (Örn: 1 yani B şıkkının)
-                // karıştırıldıktan sonra nereye gittiğini bulalım.
-                newAnswerIndex = shuffledOptionsMap.findIndex(o => o.originalIdx === originalIndex);
+        } else {
+            // Excel'de cevap "1" (B) ise -> Yazılımda 1 (B)
+            // Excel'de cevap "2" (C) ise -> Yazılımda 2 (C)
+            // (normalizeAnswer fonksiyonu backend'de zaten -1 işlemini yapıyor, burada düz alabiliriz)
+            if (!isNaN(excelAnswer)) {
+                newAnswerIndex = parseInt(excelAnswer) - 1; 
+            } else {
+                const harf = excelAnswer.toLowerCase();
+                if(harf === 'a') newAnswerIndex = 0;
+                if(harf === 'b') newAnswerIndex = 1;
+                if(harf === 'c') newAnswerIndex = 2;
+                if(harf === 'd') newAnswerIndex = 3;
+                if(harf === 'e') newAnswerIndex = 4;
             }
         }
 
         return {
             ...q,
-            options: finalOptions, // Karıştırılmış şık listesi
-            _secureAnswer: obfuscateAnswer(newAnswerIndex.toString()), // Şifrelenmiş doğru cevap indeksi
+            options: finalOptions, 
+            _secureAnswer: obfuscateAnswer(newAnswerIndex.toString()), 
             topic: q.topic || "Genel",
             image: q.image || ""
         };
     });
 
-    // ... (Kalan kodlar aynı: LocalStorage kontrolleri vs.) ...
-    
+    // LocalStorage işlemleri
     const savedData = localStorage.getItem(`exam_progress_${studentNumber}`);
     if (savedData) {
         const parsed = JSON.parse(savedData);
@@ -475,51 +465,41 @@ function confirmFinishQuiz() {
 
 // script.js dosyasındaki finishQuiz fonksiyonunu tamamen bununla değiştirin:
 
+// script.js dosyasındaki finishQuiz fonksiyonunu bununla değiştirin:
+
 function finishQuiz(type) {
     if (!isExamActive) return;
-    isExamActive = false; // Sınavı pasife çek
+    isExamActive = false;
     
     clearInterval(examTimerInterval);
     if (studentHeartbeatInterval) clearInterval(studentHeartbeatInterval);
     if(hintTimeout) clearTimeout(hintTimeout);
     if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 
-    let correctCount = 0; // Doğru sayısını tut
+    let correctCount = 0;
     
-    // --- PUANLAMA MANTIĞI ---
+    // --- PUANLAMA ---
     activeQuestions.forEach((q, i) => {
-        if(type.startsWith("CHEATING")) return; // Kopya ise puan hesaplama
+        if(type.startsWith("CHEATING")) return;
 
-        // Şifreli doğru cevabı çöz
         const correctVal = deobfuscateAnswer(q._secureAnswer);
-        const userVal = userAnswers[i]; // Öğrencinin cevabı
+        const userVal = userAnswers[i];
         
         let isOk = false;
-
-        // Kontrol: İkisi de boş değilse karşılaştır
         if (userVal !== null && userVal !== undefined && correctVal !== null && correctVal !== undefined) {
-            // Hepsini String'e çevir, boşlukları sil ve küçük harfe dönüştür.
-            // Bu sayede:
-            // 1. "Ankara" ile "ankara " eşit sayılır (Açık uçlu soru için)
-            // 2. "1" ile 1 eşit sayılır (Test sorusu için)
             const uStr = userVal.toString().trim().toLowerCase();
             const cStr = correctVal.toString().trim().toLowerCase();
             
-            // Eğer cevap "text" ise (Hoca excel'e cevap yazmamışsa) otomatik doğru sayma, 
-            // ama hoca cevabı "Paris" girdiyse ve öğrenci "Paris" yazdıysa doğru say.
             if (uStr === cStr) {
                 isOk = true;
             }
         }
-
         if (isOk) correctCount++;
     });
 
-    // --- DİNAMİK PUAN HESABI ---
-    // Soru sayısı kaç olursa olsun (5, 10, 25, 50...) puanı 100 üzerinden hesaplar.
+    // Puan Hesabı
     let totalQuestions = activeQuestions.length;
     let score = 0;
-    
     if (totalQuestions > 0) {
         score = Math.round((correctCount / totalQuestions) * 100);
     }
@@ -527,15 +507,10 @@ function finishQuiz(type) {
     // Ekran Değişimi
     document.getElementById('quizScreen').classList.add('hidden');
     document.getElementById('resultScreen').classList.remove('hidden');
-    
-    const scoreCard = document.querySelector('.score-card');
-    if(scoreCard) scoreCard.classList.add('score-pop-animation');
-
     document.getElementById('resultName').innerText = studentName;
     document.getElementById('resultId').innerText = studentNumber;
     document.getElementById('score').innerText = score;
 
-    // Feedback Mesajı
     const fb = document.getElementById('feedbackMessage');
     let statusNote = "NORMAL";
 
@@ -543,20 +518,8 @@ function finishQuiz(type) {
         fb.innerHTML = "⚠️ KOPYA GİRİŞİMİ - SINAV İPTAL";
         fb.style.color = "red";
         statusNote = "KOPYA";
-        
-        // Backend'e Kopya Sinyali
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                type: "HEARTBEAT",
-                Numara: studentNumber,
-                Isim: studentName,
-                Soru: currentQuestionIndex + 1,
-                Kopya: "⚠️ KOPYA TESPİTİ",
-                Itiraz: "-"
-            })
-        }).catch(err => console.log("Sinyal hatası"));
-
+        // Kopya Sinyali...
+        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "HEARTBEAT", Numara: studentNumber, Isim: studentName, Soru: currentQuestionIndex + 1, Kopya: "⚠️ KOPYA TESPİTİ", Itiraz: "-" }) }).catch(()=>{});
     } else {
         if (score >= 50) {
             fb.innerHTML = "Tebrikler! Geçtiniz 🎉";
@@ -566,24 +529,12 @@ function finishQuiz(type) {
             fb.innerHTML = "Kaldınız.";
             fb.style.color = "red";
         }
-        
-        // Backend'e Bitiş Sinyali
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                type: "HEARTBEAT",
-                Numara: studentNumber,
-                Isim: studentName,
-                Soru: "BİTTİ",
-                Kopya: "TAMAMLANDI",
-                Itiraz: "-"
-            })
-        }).catch(err => console.log("Sinyal hatası"));
+        // Bitiş Sinyali
+        fetch(GOOGLE_SCRIPT_URL, { method: "POST", body: JSON.stringify({ type: "HEARTBEAT", Numara: studentNumber, Isim: studentName, Soru: "BİTTİ", Kopya: "TAMAMLANDI", Itiraz: "-" }) }).catch(()=>{});
     }
 
     generateReviewPanel();
 
-    // İtirazları Topla
     let itirazMetni = "";
     if (typeof userObjections !== 'undefined') {
         Object.keys(userObjections).forEach(key => {
@@ -593,7 +544,26 @@ function finishQuiz(type) {
     }
     if(itirazMetni === "") itirazMetni = "-";
 
-    // SONUCU KAYDET (Cevaplar dizisini göndermeyi unutmuyoruz)
+    // --- KARIŞIKLIĞI DÜZELTME (RE-ORDERING) ---
+    // Öğrenci cevapları şu an karışık sırada (userAnswers).
+    // Bunları Excel'deki orijinal sıraya (originalIndex) göre yeniden dizmeliyiz.
+    
+    const sortedAnswers = new Array(activeQuestions.length).fill("");
+    
+    activeQuestions.forEach((q, index) => {
+        // q.originalIndex: Bu sorunun Excel'deki gerçek sıra numarası
+        // index: Şu an sınavdaki karışık sıra numarası
+        // userAnswers[index]: Öğrencinin bu soruya verdiği cevap
+        
+        if (q.originalIndex !== undefined) {
+            sortedAnswers[q.originalIndex] = userAnswers[index];
+        } else {
+            // Eğer indeks bulunamazsa olduğu gibi koy (Yedek plan)
+            sortedAnswers[index] = userAnswers[index];
+        }
+    });
+
+    // SONUCU KAYDET (Artık 'userAnswers' yerine 'sortedAnswers' gönderiyoruz)
     sendToGoogleSheets({
         type: "RESULT",
         Isim: studentName,
@@ -601,12 +571,11 @@ function finishQuiz(type) {
         Puan: score,
         Durum: statusNote,
         Itirazlar: itirazMetni,
-        Cevaplar: userAnswers 
+        Cevaplar: sortedAnswers // <-- DÜZELTİLMİŞ SIRALI LİSTE
     });
     
     localStorage.removeItem(`exam_progress_${studentNumber}`);
 }
-
 // -----------------------------------------------------
 // CEVAP ANAHTARI & YÖNETİCİ PANELİ
 // -----------------------------------------------------
