@@ -148,87 +148,116 @@
         <div id="reviewArea" class="hidden review-area"></div>
     </div>
 
-    <div id="adminPanel" class="container hidden" style="border: 2px solid #ef4444;">
-        <h2 style="color:#ef4444;">🛠️ Hoca Paneli</h2>
-        <div id="adminLogin">
-            <input type="password" id="adminPass" placeholder="Yönetici Şifresi">
-            <button onclick="adminLoginAttempt()" class="btn-primary" style="background:#374151; margin-top:10px;">Giriş</button>
-        </div>
-        <div id="adminControls" class="hidden">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <p style="color:green; font-weight:bold; margin:0;">✅ Yönetici Modu</p>
-        <button onclick="startAdminMonitor()" style="width:auto; padding:8px 15px; background:#4F46E5; font-size:0.9rem;">📡 Canlı İzlemeyi Başlat</button>
-        <button onclick="toggleGlobalExam('STARTED')" id="globalStartBtn" style="width:auto; padding:8px 15px; background:#059669; font-size:0.9rem; margin-left:10px;">🚀 Sınavı BAŞLAT</button>
-        <button onclick="toggleGlobalExam('WAITING')" style="width:auto; padding:8px 15px; background:#b91c1c; font-size:0.9rem; margin-left:5px;">⛔ DURDUR</button>
+    <div id="adminPanel" class="container hidden">
+    
+    <div class="admin-header">
+        <h2>Yönetici Paneli</h2>
+        <span class="badge-admin">Admin Yetkisi</span>
     </div>
 
-    <div style="display:flex; gap:10px; margin-bottom:15px;">
-        <button onclick="showAdminTab('monitor')" class="btn-secondary" style="padding:10px;">📊 Canlı Takip</button>
-        <button onclick="showAdminTab('questions')" class="btn-secondary" style="padding:10px;">📝 Soru Yönetimi</button>
-    </div>
-
-    <div id="tab-monitor">
-    <div class="stats-grid">
-        <div class="stat-card" style="background: #3b82f6;">
-            <h3>Aktif</h3>
-            <span id="stat-active">0</span>
-        </div>
-        <div class="stat-card" style="background: #10b981;">
-            <h3>Bitiren</h3>
-            <span id="stat-finished">0</span>
-        </div>
-        <div class="stat-card" style="background: #ef4444;">
-            <h3>Kopya/Risk</h3>
-            <span id="stat-risk">0</span>
-        </div>
-    </div>
-    <div style="display:flex; justify-content:space-between; margin-bottom:10px; gap:10px;">
+    <div id="adminLogin" style="max-width: 380px; margin: 0 auto; text-align: center; padding: 20px 0;">
         
-        <input type="text" id="adminSearch" placeholder="Öğrenci Ara (İsim/No)..." onkeyup="filterAdminTable()" 
-               style="padding:8px; border:1px solid #ccc; border-radius:5px; flex-grow:1; margin-bottom:0;">
+        <div style="width: 70px; height: 70px; background: #f3f4f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+            <span style="font-size: 2rem;">🔐</span>
+        </div>
+
+        <h3 style="margin: 0 0 10px 0; color: #111827; font-size: 1.2rem;">Hoş Geldiniz</h3>
         
-        <button onclick="document.getElementById('monitorTable').classList.toggle('grid-mode')" class="btn-secondary" 
-                style="width:auto; padding:8px 15px; background:#fff; margin-top:0; white-space:nowrap;">
-                ▦ Görünüm
-        </button>
-
-        <button onclick="exportTableToCSV('sinav_durumu.csv')" class="btn-secondary" 
-                style="width:auto; padding:8px 15px; background:#fff; margin-top:0; white-space:nowrap;">
-                📥 Excel İndir
-        </button>
+        <p style="color:#6b7280; margin-bottom:25px; font-size: 0.9rem; line-height: 1.5;">
+            Yönetici paneline erişmek için lütfen güvenlik şifresini giriniz.
+        </p>
+        
+        <input type="password" id="adminPass" placeholder="••••••" 
+               onkeydown="if(event.key === 'Enter') adminLoginAttempt()"
+               style="width: 100%; padding: 15px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1.2rem; margin-bottom: 20px; text-align: center; letter-spacing: 4px; outline: none; transition: all 0.3s;">
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="adminLoginAttempt()" class="btn-clean btn-dark" style="width:100%; padding: 15px; justify-content: center; font-size: 1rem;">
+                Giriş Yap
+            </button>
+            
+            <button onclick="closeAdmin()" class="btn-clean btn-light" style="width:100%; padding: 12px; justify-content: center; border: none; background: transparent; color: #6b7280;">
+                Vazgeç ve Geri Dön
+            </button>
+        </div>
     </div>
-   
 
-    <div style="background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:10px; height:300px; overflow-y:auto;">
-        <table id="monitorTable" style="width:100%; border-collapse: collapse; font-size:0.9rem;">
-            <thead>
-                <tr style="background:#e5e7eb; text-align:left;">
-                    <th style="padding:8px;">No</th>
-                    <th style="padding:8px;">Öğrenci</th>
-                    <th style="padding:8px;">Durum</th>
-                    <th style="padding:8px;">Soru</th>
-                    <th style="padding:8px;">İtiraz</th>
-                </tr>
-            </thead>
-            <tbody id="liveTableBody">
-                <tr><td colspan="5" style="text-align:center; padding:20px;">Veri bekleniyor...</td></tr>
-            </tbody>
-        </table>
-    </div>
-    <div style="margin-top:10px; font-size:0.8rem; color:#666;">
-        * Liste her 10 saniyede bir yenilenir. <span style="color:red;">Kırmızı</span>: Kopya şüphesi.
+    <div id="adminControls" class="hidden">
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Aktif Öğrenci</h3>
+                <span id="stat-active">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Tamamlayan</h3>
+                <span id="stat-finished">0</span>
+            </div>
+            <div class="stat-card">
+                <h3>Riskli Durum</h3>
+                <span id="stat-risk" style="color:#ef4444;">0</span>
+            </div>
+        </div>
+
+        <div class="admin-toolbar">
+            <button onclick="startAdminMonitor()" class="btn-clean btn-dark">Canlı İzlemeyi Başlat</button>
+            <div style="width:1px; height:24px; background:#d1d5db; margin:0 10px;"></div>
+            <button onclick="toggleGlobalExam('STARTED')" id="globalStartBtn" class="btn-clean btn-green">Sınavı Başlat</button>
+            <button onclick="toggleGlobalExam('WAITING')" class="btn-clean btn-red">Sınavı Durdur</button>
+            
+            <div style="flex-grow:1;"></div> <button onclick="closeAdmin()" class="btn-clean btn-light">Çıkış</button>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:1px solid #e5e7eb; padding-bottom:10px;">
+            <button onclick="showAdminTab('monitor')" class="btn-clean btn-light" style="border:none; background:transparent; font-weight:700; color:#111827;">Canlı Takip</button>
+            <button onclick="showAdminTab('questions')" class="btn-clean btn-light" style="border:none; background:transparent; color:#6b7280;">Soru Yönetimi</button>
+        </div>
+
+        <div id="tab-monitor">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center;">
+                <input type="text" id="adminSearch" placeholder="Öğrenci Ara..." onkeyup="filterAdminTable()">
+                <div style="display:flex; gap:10px;">
+                    <button onclick="document.getElementById('monitorTable').classList.toggle('grid-mode')" class="btn-clean btn-light">Görünüm Değiştir</button>
+                    <button onclick="exportTableToCSV('sinav_durumu.csv')" class="btn-clean btn-light">Excel İndir</button>
+                </div>
+            </div>
+
+            <div class="table-container" style="max-height:400px; overflow-y:auto;">
+                <table id="monitorTable" style="width:100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Öğrenci</th>
+                            <th>Durum</th>
+                            <th>Soru</th>
+                            <th>İtiraz</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liveTableBody">
+                        <tr><td colspan="5" style="text-align:center; padding:30px; color:#9ca3af;">Veri bekleniyor...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-questions" class="hidden">
+            <div style="background:#fef2f2; border:1px solid #fee2e2; padding:15px; border-radius:8px; margin-bottom:20px;">
+                <p style="color:#b91c1c; margin:0 0 10px 0; font-size:0.9rem;">⚠️ <b>Dikkat:</b> Buradan yapacağınız işlemler geri alınamaz.</p>
+                <button onclick="deleteQuestions()" class="btn-clean btn-red">Tüm Soruları Temizle</button>
+            </div>
+            
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:0.9rem;">Soru JSON Verisi:</label>
+            <textarea id="jsonInput" placeholder='JSON kodunu buraya yapıştırın...' style="width:100%; height:150px; padding:15px; border:1px solid #d1d5db; border-radius:8px; font-family:monospace; margin-bottom:15px;"></textarea>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <button onclick="uploadQuestions()" class="btn-clean btn-dark">Soruları Yükle</button>
+                <span id="adminStatus" style="font-size:0.9rem; color:#6b7280;"></span>
+            </div>
+        </div>
+
     </div>
 </div>
 
-    <div id="tab-questions" class="hidden">
-        <button onclick="deleteQuestions()" style="background:#ef4444; color:white;">🗑️ Tüm Soruları Sil</button>
-        <textarea id="jsonInput" placeholder='JSON Kodunu Buraya Yapıştır...' style="width:100%; height:120px; margin:10px 0; border:2px solid #ddd; border-radius:8px; padding:10px;"></textarea>
-        <button onclick="uploadQuestions()" style="background:#10b981; color:white;">📥 Soruları Yükle</button>
-        <p id="adminStatus" style="font-size:0.9rem; color:#666;"></p>
-    </div>
-</div>
-        <button onclick="closeAdmin()" class="btn-secondary" style="margin-top:20px;">Kapat</button>
-    </div>
 
     
 
