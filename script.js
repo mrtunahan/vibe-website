@@ -1,7 +1,7 @@
 // ==================================================================
 // ⚠️ DİKKAT: BURADAKİ URL SİZİN KENDİ APPSCRIPT URL'NİZ OLMALI
 // ==================================================================
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybRSc2_ZsGEJuOma2sQKDAMyxnh8ogYntVCuy-PJdtwIf_YHezpBjvOL5MEL0auGhQ/exec';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbykCOf16hA1t8WL5SW_98_p8s_EAgdgTYlYtsxh44SBBLjhjsXkceoSdHmppsIWot3D/exec';
 
 // Global değişkenler
 let questionsSource = [];
@@ -317,65 +317,62 @@ function renderOptions(q, index) {
     div.innerHTML = "";
     const currentAns = userAnswers[index];
 
-    // ============================================================
-    // 👇 BURASI DEĞİŞTİ (Senin verdiğin yeni kod bloğu) 👇
-    // ============================================================
+  
     
     // 1. Durum: Klasik Yazılı Cevap (GELİŞMİŞ MOD: TEXT | DRAW | CODE)
-    if (q.type === 'text') {
-        const val = currentAns || '';
-        let initialMode = 'text';
-        
-        // Eğer daha önce çizim yapılmışsa modu 'draw' yap
-        if(val.startsWith('[DRAW]')) initialMode = 'draw';
-        
-        div.innerHTML = `
-            <div class="tools-container">
-                <div class="tool-btn ${initialMode==='text'?'active':''}" onclick="switchTool(${index}, 'text', this)">📝 Metin</div>
-                <div class="tool-btn ${initialMode==='draw'?'active':''}" onclick="switchTool(${index}, 'draw', this)">🎨 Çizim</div>
-                <div class="tool-btn ${initialMode==='code'?'active':''}" onclick="switchTool(${index}, 'code', this)">💻 Kod</div>
-            </div>
+    // renderOptions fonksiyonu içindeki "if (q.type === 'text')" bloğunu bununla değiştirin:
 
-            <div id="box-text-${index}" class="${initialMode==='text'?'':'hidden'}">
-                 <textarea 
-                    class="text-answer-input" 
-                    rows="8" 
-                    placeholder="Cevabınızı buraya yazınız..."
-                    oninput="userAnswers[${index}]=this.value; updateNavVisuals(); saveProgressToLocal()"
-                >${val.startsWith('[DRAW]') ? '' : val}</textarea>
-            </div>
+if (q.type === 'text') {
+    const val = currentAns || '';
+    let initialMode = 'text';
+    if(val.startsWith('[DRAW]')) initialMode = 'draw';
+    
+    div.innerHTML = `
+        <div class="tools-container">
+            <div class="tool-btn ${initialMode==='text'?'active':''}" onclick="switchTool(${index}, 'text', this)">📝 Metin</div>
+            <div class="tool-btn ${initialMode==='draw'?'active':''}" onclick="switchTool(${index}, 'draw', this)">🎨 Çizim</div>
+            <div class="tool-btn ${initialMode==='code'?'active':''}" onclick="switchTool(${index}, 'code', this)">💻 Kod</div>
+        </div>
 
-            <div id="box-draw-${index}" class="canvas-wrapper ${initialMode==='draw'?'':'hidden'}">
-                <canvas id="canvas-${index}" style="width:100%; height:300px;"></canvas>
-                <div class="canvas-toolbar">
-                    <button class="canvas-btn" onclick="clearCanvas('canvas-${index}', ${index})">🗑️ Temizle</button>
-                </div>
-            </div>
+        <div id="box-text-${index}" class="${initialMode==='text'?'':'hidden'}">
+             <textarea 
+                class="text-answer-input" rows="8" placeholder="Cevabınızı buraya yazınız..."
+                oninput="userAnswers[${index}]=this.value; updateNavVisuals(); saveProgressToLocal()"
+            >${val.startsWith('[DRAW]') ? '' : val}</textarea>
+        </div>
 
-            <div id="box-code-${index}" class="code-editor-wrapper ${initialMode==='code'?'':'hidden'}">
-                <div class="code-header"><span>main.js</span> <span>JavaScript</span></div>
-                <textarea 
-                    class="code-input" 
-                    rows="10" 
-                    spellcheck="false"
-                    placeholder="// Kodunuzu buraya yazın..."
-                    oninput="userAnswers[${index}]=this.value; updateNavVisuals(); saveProgressToLocal()"
-                    onkeydown="if(event.key==='Tab'){event.preventDefault();this.setRangeText('    ',this.selectionStart,this.selectionStart,'end')}"
-                >${val.startsWith('[DRAW]') ? '' : val}</textarea>
+        <div id="box-draw-${index}" class="canvas-wrapper ${initialMode==='draw'?'':'hidden'}">
+            <div class="canvas-toolbar">
+                <div class="color-btn" style="background:black" onclick="setCanvasColor(${index}, 'black', this)"></div>
+                <div class="color-btn" style="background:#ef4444" onclick="setCanvasColor(${index}, '#ef4444', this)"></div>
+                <div class="color-btn" style="background:#3b82f6" onclick="setCanvasColor(${index}, '#3b82f6', this)"></div>
+                <div class="color-btn" style="background:#10b981" onclick="setCanvasColor(${index}, '#10b981', this)"></div>
+                <div style="width:1px; bg:#ddd; margin:0 5px;"></div>
+                <button class="tool-action-btn" onclick="setCanvasColor(${index}, 'eraser', this)">🧹 Silgi</button>
+                <button class="tool-action-btn" onclick="clearCanvas('canvas-${index}', ${index})">🗑️ Temizle</button>
             </div>
-        `;
+            <canvas id="canvas-${index}" style="width:100%; height:350px; cursor: crosshair;"></canvas>
+        </div>
 
-        // Eğer başlangıç modu çizim ise canvas'ı hemen başlat
-        if(initialMode === 'draw') {
-             setTimeout(() => initCanvas(`canvas-${index}`, index), 100);
-        }
+        <div id="box-code-${index}" class="code-editor-wrapper ${initialMode==='code'?'':'hidden'}">
+            <div class="code-header"><span>main.js</span> <span>JavaScript</span></div>
+            <textarea class="code-input" rows="12" spellcheck="false"
+                placeholder="// Kodunuzu buraya yazın..."
+                oninput="userAnswers[${index}]=this.value; updateNavVisuals(); saveProgressToLocal()"
+                onkeydown="if(event.key==='Tab'){event.preventDefault();this.setRangeText('    ',this.selectionStart,this.selectionStart,'end')}"
+            >${val.startsWith('[DRAW]') ? '' : val}</textarea>
+        </div>
+    `;
+
+    if(initialMode === 'draw') setTimeout(() => initCanvas(`canvas-${index}`, index), 100);
+}
     
     // ============================================================
     // 👆 YENİ KOD BİTİŞİ 👆
     // ============================================================
 
     // 2. Durum: Çoklu Seçim (Checkbox) - (ESKİSİ GİBİ KALSIN)
-    } else if (q.type === 'checkbox') {
+     else if (q.type === 'checkbox') {
         let sel = currentAns ? JSON.parse(currentAns) : [];
         q.options.forEach((opt, i) => {
             const isChk = sel.includes(i);
@@ -419,14 +416,37 @@ function renderOptions(q, index) {
 // -----------------------------------------------------
 // ZAMANLAYICI & BİTİŞ
 // -----------------------------------------------------
+// YENİ: Güvenli Zamanlayıcı
 function startExamTimer() {
-    totalTimeLeft = 30 * 60;
+    // 1. Daha önce kaydedilmiş bir bitiş zamanı var mı?
+    let savedEndTime = localStorage.getItem(`exam_endtime_${studentNumber}`);
+    
+    if (!savedEndTime) {
+        // Yoksa: Şu an + 30 dakika ekle ve kaydet
+        const now = new Date().getTime();
+        savedEndTime = now + (30 * 60 * 1000); 
+        localStorage.setItem(`exam_endtime_${studentNumber}`, savedEndTime);
+    }
+
     examTimerInterval = setInterval(() => {
-        if (totalTimeLeft <= 0) { finishQuiz("TIMEOUT"); return; }
-        totalTimeLeft--;
-        const m = Math.floor(totalTimeLeft/60);
-        const s = totalTimeLeft%60;
+        const now = new Date().getTime();
+        const distance = savedEndTime - now;
+
+        if (distance < 0) {
+            clearInterval(examTimerInterval);
+            document.getElementById('timer').innerText = "00:00";
+            finishQuiz("TIMEOUT");
+            return;
+        }
+
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
         document.getElementById('timer').innerText = `${m}:${s<10?'0'+s:s}`;
+        
+        // Kritik: Son 1 dakikada görsel uyarı
+        if(distance < 60000) {
+            document.getElementById('timerWrapper').classList.add('timer-urgent');
+        }
     }, 1000);
 }
 
@@ -621,15 +641,35 @@ function closeAdmin() {
     location.reload(); 
 }
 
+// YENİ: Güvenli Admin Girişi
 function adminLoginAttempt() {
     const p = document.getElementById('adminPass').value;
-    if(p === "zeynep1605") {
-        document.getElementById('adminLogin').classList.add('hidden');
-        document.getElementById('adminControls').classList.remove('hidden');
-        Swal.fire({toast:true, icon:'success', title:'Hoş geldin Yönetici', timer:1500, showConfirmButton:false});
-    } else {
-        Swal.fire('Hatalı Şifre');
-    }
+    const btn = document.querySelector('#adminLogin button');
+    
+    // Basit boş kontrolü
+    if(!p) return;
+
+    btn.innerText = "Kontrol ediliyor...";
+    btn.disabled = true;
+
+    // Sunucuya soruyoruz (Backend kodunu eklediyseniz çalışır)
+    fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "CHECK_ADMIN", pass: p })
+    })
+    .then(r => r.json())
+    .then(data => {
+        btn.innerText = "Giriş Yap";
+        btn.disabled = false;
+        
+        if(data.status === "success") {
+            document.getElementById('adminLogin').classList.add('hidden');
+            document.getElementById('adminControls').classList.remove('hidden');
+            Swal.fire({toast:true, icon:'success', title:'Yönetici Girişi Başarılı', timer:1500, showConfirmButton:false});
+        } else {
+            Swal.fire({icon: 'error', title: 'Hatalı Şifre', text: 'Lütfen tekrar deneyiniz.'});
+        }
+    });
 }
 
 function uploadQuestions() {
@@ -1053,10 +1093,11 @@ function initCanvas(canvasId, index) {
     canvas.height = 300; // Yükseklik sabit
     
     // Kalem Ayarları
-    ctx.strokeStyle = '#000';
     ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 2;
+   ctx.lineCap = 'round';
+   // Varsayılanları ayarla
+   ctx.strokeStyle = 'black'; 
+   ctx.lineWidth = 2;
 
     function draw(e) {
         if (!isDrawing) return;
@@ -1261,3 +1302,37 @@ function renderDetailView(data) {
         list.appendChild(div);
     });
 }
+// --- YENİ ÇİZİM YARDIMCI FONKSİYONLARI ---
+let canvasSettings = {}; // Her soru için ayarları tutar
+
+function setCanvasColor(index, color, btn) {
+    const canvasId = `canvas-${index}`;
+    if(!canvasSettings[canvasId]) canvasSettings[canvasId] = { color: 'black', width: 2 };
+    
+    // Buton aktiflik durumu
+    const parent = btn.parentElement;
+    Array.from(parent.children).forEach(c => c.classList.remove('active'));
+    if(!btn.classList.contains('tool-action-btn')) btn.classList.add('active');
+
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext('2d');
+    
+    if (color === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out'; // Silgi modu
+        ctx.lineWidth = 15; // Silgi daha kalın olsun
+    } else {
+        ctx.globalCompositeOperation = 'source-over'; // Normal çizim
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        canvasSettings[canvasId].color = color;
+    }
+}
+
+// initCanvas fonksiyonunun içindeki "Kalem Ayarları" kısmını da şöyle güncelleyin:
+// (Bu fonksiyon script.js'de zaten var, içini güncelleyin)
+/* ctx.lineJoin = 'round';
+   ctx.lineCap = 'round';
+   // Varsayılanları ayarla
+   ctx.strokeStyle = 'black'; 
+   ctx.lineWidth = 2; 
+*/
